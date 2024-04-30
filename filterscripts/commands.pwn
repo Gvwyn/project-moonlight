@@ -1,5 +1,6 @@
 #define FILTERSCRIPT
 #include <open.mp>
+#include <easyDialog>
 #include <global_vars>
 #include <izcmd>
 #include <rBits>
@@ -112,15 +113,17 @@ CMD:cp(playerid, params[])
 // parancsok
 CMD:help(playerid, params[])
 {
-	ShowPlayerDialog(playerid, CMDS, DIALOG_STYLE_MSGBOX, "{00FF00}A szerver parancsai",\
+	Dialog_Show(playerid, CMDS, DIALOG_STYLE_MSGBOX, "{00FF00}A szerver parancsai",\
 	"{00FFFF}/help /cmds\t\t{FFFFFF}Ez a parancs.\n\
+	{00FFFF}/t\t\t\t{FFFFFF}Alapvetõ teleportok lekérése. {AAAAAA}A {FF0000}piros {AAAAAA}kijelöléssel a térképen bárhova teleportálhatsz.\n\
 	{00FFFF}/v {00AAAA}<ID>\t\t\t{FFFFFF}Jármûvek lehívása ID alapján.\n\
+	{006666}/mg\t\t\t{AAAAAA}Minigame választó megnyitása. {AA0000}(Fejlesztés alatt!)\n\
 	{00FFFF}/set {00AAAA}<w> <h> <m> \t{FFFFFF}Idõjárás és idõ állítása. {AAAAAA}<idõjárás> <óra> <perc>\n\
 	{00FFFF}/pos\t\t\t{FFFFFF}Jelenlegi pozíció lekérése.\n\
 	{00FFFF}/skin {00AAAA}<ID> \t\t{FFFFFF}Skin váltás.\n\
 	{00FFFF}/sound {00AAAA}<hang_ID> \t{FFFFFF}Játékbeli hang lejátszása ID alapján.\n\
 	{00FFFF}/ghost \t\t\t{FFFFFF}Szellem mód ki- és bekapcsolása.\n\
-	{00FFFF}/doubloon {00AAAA}<op> <$>\t{FFFFFF}Pénzt tudsz adni, illetve elvenni. {AAAAAA}<op> 0 kivonás, 1 hozzáadás\n\
+	{00FFFF}/doubloon {00AAAA}<op> <$>\t{FFFFFF}Pénzt tudsz adni, illetve elvenni. {AAAAAA}<op> 0 kivonás, 1 hozzáadás\
 	", "{00FF00}OK", "");
 	return 1;
 }
@@ -210,7 +213,6 @@ CMD:ghost(playerid, params[])
 }
 
 // ikon lerakas
-/*
 CMD:pickup(playerid, params[])
 {
 	new Float:x, Float:y, Float:z;
@@ -224,7 +226,13 @@ CMD:pickup(playerid, params[])
 	SendClientMessage(playerid, -1, "Na ezt elbasztad.");
 	return 1;
 }
-*/
+
+CMD:o(playerid, params[])
+{
+	if (PlayerHasClockEnabled(playerid)) TogglePlayerClock(playerid, false);
+	else TogglePlayerClock(playerid, true);
+	return 1;
+}
 
 // penz allitas
 CMD:doubloon(playerid, params[])
@@ -271,6 +279,7 @@ CMD:stats(playerid, params[])
 {
 	new
 		DBResult:Result,
+		uid[4],
 		name[24],
 		admin[3],
 		pass[64],
@@ -295,7 +304,7 @@ CMD:stats(playerid, params[])
 
 	GetPlayerName(passingID, name, sizeof(name));
 	Result = DB_ExecuteQuery(Database,\
-	"SELECT `Player`, `Admin`, `Password`, `Score`, \
+	"SELECT `UID`, `Player`, `Admin`, `Password`, `Score`, \
 	printf('%%,d', CASE \
 	WHEN `Cash` < -999999999 THEN -999999999 \
 	WHEN `Cash` > 999999999 THEN 999999999 \
@@ -313,9 +322,13 @@ CMD:stats(playerid, params[])
 	DB_GetFieldStringByName(Result, "fCash", dollars, 32);
 	DB_GetFieldStringByName(Result, "clampCash", dollarsInHand, 21);
 	DB_GetFieldStringByName(Result, "Score", score, 21);
-	ShowPlayerDialog(playerid, STATS, DIALOG_STYLE_MSGBOX, "{00FF00}Statisztika",\
-	"{FFFFFF}Név:\t\t{%06x}%s {FFFFFF}(Admin: {FF0000}%s{FFFFFF})\n{FFFFFF}Jelszó: \t\t{00FFFF}%s\n\
-	{FFFFFF}Pénz: \t\t{00AA00}$%s\n{FFFFFF}Ebbõl kézben: \t{007700}$%s\n{FFFFFF}Pont: \t\t{F9C1E1}%s db", "{00FF00}OK", "", GetPlayerColor(playerid) >>> 8, name, admin, pass, dollars, dollarsInHand, score);
+	DB_GetFieldStringByName(Result, "UID", uid, 4);
+	Dialog_Show(playerid, STATS, DIALOG_STYLE_MSGBOX, "{00FF00}Statisztika",\
+	"{FFFFFF}UID:\t\t{00FFFF}%s\n\
+	{FFFFFF}Név:\t\t{%06x}%s {FFFFFF}(Admin: {FF0000}%s{FFFFFF})\n\
+	{FFFFFF}Jelszó: \t\t{00FFFF}%s\n\
+	{FFFFFF}Pénz: \t\t{00AA00}$%s\n{FFFFFF}Ebbõl kézben: \t{007700}$%s\n\
+	{FFFFFF}Pont: \t\t{DDDDDD}%s db", "{00FF00}OK", "", uid, GetPlayerColor(playerid) >>> 8, name, admin, pass, dollars, dollarsInHand, score);
 	DB_FreeResultSet(Result);
 
 	printf("%i %i, %s", id, passingID, name);

