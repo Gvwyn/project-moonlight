@@ -264,7 +264,8 @@ CMD:stats(playerid, params[])
 
 	GetPlayerName(passingID, name, sizeof(name));
 	Result = DB_ExecuteQuery(Database,\
-	"SELECT `UID`, `Player`, `Admin`, `Password`, `Score`, \
+	"SELECT `UID`, `Player`, `Admin`, `Password`,\
+	printf('%%,d', `Score`) as fScore, \
 	printf('%%,d', CASE \
 	WHEN `Cash` < -999999999 THEN -999999999 \
 	WHEN `Cash` > 999999999 THEN 999999999 \
@@ -279,21 +280,21 @@ CMD:stats(playerid, params[])
 		DB_GetFieldStringByName(Result, "Password", pass, 64);
 	}
 	else pass = "{FFFFFF}Rejtve"; // amugy meg ne, halo
+
 	DB_GetFieldStringByName(Result, "fCash", dollars, 32);
 	DB_GetFieldStringByName(Result, "clampCash", dollarsInHand, 21);
-	DB_GetFieldStringByName(Result, "Score", score, 21);
+	DB_GetFieldStringByName(Result, "fScore", score, 21);
 	DB_GetFieldStringByName(Result, "UID", uid, 4);
 	Dialog_Show(playerid, STATS, DIALOG_STYLE_MSGBOX, "{00FF00}Statisztika",\
 	"{FFFFFF}UID:\t\t{00FFFF}%s\n\
-	{FFFFFF}Név:\t\t{%06x}%s {FFFFFF}(Admin: {FF0000}%s{FFFFFF})\n\
+	{FFFFFF}Név:\t\t{%06x}%s\n\
+	{FFFFFF}Admin:\t\t%s{FF0000} (%s)\n\
 	{FFFFFF}Jelszó: \t\t{00FFFF}%s\n\
 	{FFFFFF}Pénz: \t\t{00AA00}$%s\n{FFFFFF}Ebbõl kézben: \t{007700}$%s\n\
-	{FFFFFF}Pont: \t\t{DDDDDD}%s db", "{00FF00}OK", "", uid, GetPlayerColor(playerid) >>> 8, name, admin, pass, dollars, dollarsInHand, score);
+	{FFFFFF}Pont: \t\t{DDDDDD}%s db", "{00FF00}OK", "", uid, GetPlayerColor(playerid) >>> 8, name, AdminLevels[strval(admin)], admin, pass, dollars, dollarsInHand, score);
 	DB_FreeResultSet(Result);
-
 	//printf("%i %i, %s", id, passingID, name);
 	return 1;
-
 }
 
 // skin allitas

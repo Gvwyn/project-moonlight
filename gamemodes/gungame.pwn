@@ -16,6 +16,8 @@ new
 ;
 
 forward UpdateClock();
+forward KickPlayer(playerid);
+forward BanPlayer(playerid, reason[]);
 forward SetPlayerSkinFromFs(playerid, skinid); // Ez frissiti a g_PlayerSkin[playerid]-t
 forward CameraPan(playerid);
 forward SpawnPlayerFromCamPan(playerid);
@@ -117,13 +119,10 @@ public OnGameModeExit()
 
 public OnPlayerUpdate(playerid)
 {
-    printf("[OnPlayerUpdate] in hand: %i g_PlayerCash: %i", GetPlayerMoney(playerid), g_PlayerCash[playerid]);
     if(Bit1_Get(g_PlayerLogged, playerid) == 1 && IsPlayerSpawned(playerid))
     {
-        // what the actual fuck is this doing ????
         if (GetPlayerMoney(playerid) != g_PlayerCash[playerid])
         {
-            printf("[OnPlayerUpdate] desynced: in hand: %i, g_PlayerCash: %i", GetPlayerMoney(playerid), g_PlayerCash[playerid]);
             ResetPlayerMoney(playerid);
             GivePlayerMoney(playerid, g_PlayerCash[playerid]);
             return 1;
@@ -163,6 +162,9 @@ public UpdateClock()
     gettime(hours, minutes, seconds);
     TextDrawSetString(Clock, "%02d:%02d", hours, minutes);
 }
+
+public KickPlayer(playerid) Kick(playerid);
+public BanPlayer(playerid, reason[]) BanEx(playerid, reason);
 
 public SetPlayerSkinFromFs(playerid, skinid) Bit16_Set(g_PlayerSkin, playerid, skinid);
 
@@ -264,14 +266,13 @@ public OnPlayerDisconnect(playerid, reason)
     GetPlayerName(playerid, playerName, MAX_PLAYER_NAME);
     new reasons[5][] =
     {
-        "kifagyott vagy crashelt",
+        "kifagyott/crashelt",
         "kilépett",
         "ki lett rúgva",
         "eltûnt",
         "automatikusan ki lett rúgva"
     };
-
-    SendClientMessageToAll(-1, "{AAAAAA}%s {DDDDDD}%s.", playerName, reasons[reason]);
+    if (reason != 2) SendClientMessageToAll(-1, "{AAAAAA}%s {DDDDDD}%s.", playerName, reasons[reason]);
 
     // ez nem feltetlen a legokosabb dontes, viszont server load szempontjabol szerintem jobb mintha minden skinvaltas utan mentene
     // eddig nem sikerult nem elmenteni a skinemet
@@ -300,7 +301,7 @@ public OnPlayerDeath(playerid, killerid, WEAPON:reason)
 
 public OnPlayerTakeDamage(playerid, issuerid, Float:amount, WEAPON:weaponid, bodypart)
 {
-    // fejloves 1 hit
+    // headshot = death
     if (issuerid != INVALID_PLAYER_ID && bodypart == 9)
     {
         SetPlayerHealth(playerid, 0.0);
@@ -455,33 +456,58 @@ public OnPlayerCommandReceived(playerid,cmdtext[])
 	return 1;
 }
 
+CMD:setadmin(playerid, params[])
+{
+    if (5 == Bit1_Get(g_AdminLevel, playerid))
+    {
+        new who, level, name[24];
+        if (!sscanf(params, "ii", who, level))
+        {
+            GetPlayerName(who, name, sizeof(name));
+            SendClientMessage(playerid, 0xAA0000FF, "%s (%i) admin szintje mostantól %s {AA0000}(%i).", name, who, AdminLevels[level], level);
+            Bit8_Set(g_AdminLevel, who, level);
+            return 1;
+        }
+        else
+        {
+            SendClientMessage(playerid, 0xFF0000AA, "/setadmin <ki> <szint>");
+            return 1;
+        }
+    }
+    else
+    {
+        SendClientMessage(playerid, 0xFF0000AA, "Ehhez nincs jogod.");
+        return 1;
+    }
+}
+
 CMD:reg(playerid, params[])
 {
+    if (2 <= Bit1_Get(g_AdminLevel, playerid))
+    {
         new name[MAX_PLAYER_NAME];
-		GetPlayerName(playerid, name, sizeof(name));
-		if (g_AdminLevel[playerid])
-		{
-			// ha ki van kapcsolva, kapcsolja be
-			if (GetSVarInt("Reg") == 0)
-			{
-				SetSVarInt("Reg", 1);
-				SetServerRule("reg", "On");
-				SendClientMessageToAll(0x00FF00AA, "%s engedélyezte a regisztrációt.", name);
-				return 1;
-			}
-			else
-			{
-				SetSVarInt("Reg", 0);
-				SetServerRule("reg", "Off");
-				SendClientMessageToAll(0xFF0000AA, "%s letiltotta a regisztrációt.", name);
-				return 1;
-			}
-		}
-		else
-		{
-			SendClientMessage(playerid, 0xFF0000AA, "Ehhez nincs jogod.");
-			return 1;
-		}
+        GetPlayerName(playerid, name, sizeof(name));
+        // ha ki van kapcsolva, kapcsolja be
+        if (GetSVarInt("Reg") == 0)
+        {
+            SetSVarInt("Reg", 1);
+            SetServerRule("reg", "On");
+            SendClientMessageToAll(0x00FF00AA, "%s engedélyezte a regisztrációt.", name);
+            return 1;
+        }
+        else
+        {
+            SetSVarInt("Reg", 0);
+            SetServerRule("reg", "Off");
+            SendClientMessageToAll(0xFF0000AA, "%s letiltotta a regisztrációt.", name);
+            return 1;
+        }
+    }
+    else
+    {
+        SendClientMessage(playerid, 0xFF0000AA, "Ehhez nincs jogod.");
+        return 1;
+    }
 }
 
 // penz allitas
@@ -515,7 +541,6 @@ CMD:doubloon(playerid, params[])
 		ResetPlayerMoney(playerid);
 		GivePlayerMoney(playerid, g_PlayerCash[playerid]);
 		DB_FreeResultSet(Result);
-        printf("[/doubloon] in hand: %i, g_PlayerCash: %i", GetPlayerMoney(playerid), g_PlayerCash[playerid]);
 		return 1;
 	}
 	else
