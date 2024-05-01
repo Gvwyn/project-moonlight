@@ -19,5 +19,7 @@
         - elkezdtem a merleg minigamet, amit White ajanlott, innen is puszi
     - easyDialog include-t hasznalok mostmar, bolond dialog spoofing ellen
     - ora jobb fentre, HH:MM formatumban (meg lehet csinositani rajta)
+    - /v parancs mostmar letiltja a vonatokat (ezeket nem lehet igy spawnolni)
+    - mostmar nem rakja vissza 60 sec utan a jarmuveket oda, ahova lespawnoltuk
 
 > language support soon!

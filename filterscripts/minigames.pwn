@@ -1,9 +1,9 @@
 #define FILTERSCRIPT
 #include <open.mp>
+#include <global_vars>
 #include <easyDialog>
 #include <izcmd>
 #include <sscanf2>
-#include <global_vars>
 
 public OnFilterScriptInit()
 {
@@ -34,11 +34,7 @@ Dialog:MINIGAMES(playerid, response, listitem, inputtext[])
 	{
 		if (listitem == 0)
 		{
-			printf("called");
-			Dialog_Show(playerid, SCALEGAMESETUP, DIALOG_STYLE_MSGBOX,\
-			"{3D85C6}Mérleg",\
-			"a jatek szabalyzata majd itt lesz de lusta vagyok",\
-			"{00FF00}Indítás", "{FF0000}Mégse");
+			SendClientMessage(playerid, 0xFF0000AA, "Ezen még dolgozom, nézz vissza késõbb.");
 		}
 	}
 	return 1;

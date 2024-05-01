@@ -1,7 +1,7 @@
 #define FILTERSCRIPT
 #include <open.mp>
-#include <easyDialog>
 #include <global_vars>
+#include <easyDialog>
 #include <izcmd>
 #include <rBits>
 #include <sscanf2>
@@ -175,13 +175,21 @@ CMD:v(playerid, params[])
 	{
 	    if (vehicleid >= 400 && vehicleid <= 611)
 	    {
+			if (vehicleid != 449 || vehicleid != 537 || vehicleid != 538 || vehicleid != 569 || vehicleid != 570 || vehicleid != 590)
+			{
 	        new Float:x, Float:y, Float:z, Float:angle;
 		    GetPlayerPos(playerid, x, y, z);
 		    GetPlayerFacingAngle(playerid, angle);
 			DestroyVehicle(GetPVarInt(playerid, "veh"));
-		    SetPVarInt(playerid, "veh", CreateVehicle(vehicleid, x, y, z, angle, 1, 1, 60) );
+		    SetPVarInt(playerid, "veh", CreateVehicle(vehicleid, x, y, z, angle, -1, -1, -1) );
 			PutPlayerInVehicle(playerid, GetPVarInt(playerid, "veh"), 0);
 			return 1;
+			}
+			else 
+			{
+				SendClientMessage(playerid, 0xFF0000AA, "Ezeket a jármûveket nem hívhatod le.");
+				return 1;
+			}
 	    }
 	    else
 	    {
@@ -225,54 +233,6 @@ CMD:pickup(playerid, params[])
 	}
 	SendClientMessage(playerid, -1, "Na ezt elbasztad.");
 	return 1;
-}
-
-CMD:o(playerid, params[])
-{
-	if (PlayerHasClockEnabled(playerid)) TogglePlayerClock(playerid, false);
-	else TogglePlayerClock(playerid, true);
-	return 1;
-}
-
-// penz allitas
-CMD:doubloon(playerid, params[])
-{
-	new
-		DBResult:Result,
-		op,
-		inputDollars,
-		dollars[35],
-		clampDollars[25],
-		name[24]
-	;
-	GetPlayerName(playerid, name, 24);
-	if (!sscanf(params, "ii", op, inputDollars))
-	{
-		// printf("%i %i", op, inputDollars);
-		if (op == 1) DB_ExecuteQuery(Database, "UPDATE `Players` SET `Cash` = `Cash` + %i WHERE `Player` = '%s'", inputDollars, DB_Escape(name));
-		else if (op == 0) DB_ExecuteQuery(Database, "UPDATE `Players` SET `Cash` = `Cash` - %i WHERE `Player` = '%s'", inputDollars, DB_Escape(name));
-
-		Result = DB_ExecuteQuery(Database,\
-		"SELECT printf('%%d', CASE \
-		WHEN `Cash` < -999999999 THEN -999999999 \
-		WHEN `Cash` > 999999999 THEN 999999999 \
-		ELSE `Cash` END) AS clampCash, \
-		printf('%%,d', `Cash`) as fCash \
-		FROM `Players` WHERE `Player` = '%s'", DB_Escape(name));
-		DB_GetFieldStringByName(Result, "fCash", dollars, 30);
-		DB_GetFieldStringByName(Result, "clampCash", clampDollars, 25);
-		printf("%s -$- %s", dollars, clampDollars);
-		SendClientMessage(playerid, 0x00AA00FF, "Pénzed átírva -> $%s", dollars);
-		ResetPlayerMoney(playerid);
-		GivePlayerMoney(playerid, strval(clampDollars));
-		DB_FreeResultSet(Result);
-		return 1;
-	}
-	else
-	{
-		SendClientMessage(playerid, 0xFF0000AA, "/doubloon <0/1> <$>");
-		return 1;
-	}
 }
 
 CMD:stats(playerid, params[])
@@ -331,7 +291,7 @@ CMD:stats(playerid, params[])
 	{FFFFFF}Pont: \t\t{DDDDDD}%s db", "{00FF00}OK", "", uid, GetPlayerColor(playerid) >>> 8, name, admin, pass, dollars, dollarsInHand, score);
 	DB_FreeResultSet(Result);
 
-	printf("%i %i, %s", id, passingID, name);
+	//printf("%i %i, %s", id, passingID, name);
 	return 1;
 
 }

@@ -1,8 +1,11 @@
 #include <open.mp>
-#include <easyDialog>
 #include <global_vars> // 1 fajl, amiben global valtozok vannak
+#include <easyDialog>
 #include <rBits>
 #include <izcmd>
+#include <sscanf2>
+
+new g_PlayerCash[MAX_PLAYERS] = {0, ...};
 
 new
     Bit1: g_PlayerLogged<MAX_PLAYERS>, // 0 & 1
@@ -10,7 +13,6 @@ new
     Bit8: g_AdminLevel<MAX_PLAYERS>,
     Bit16:g_PlayerSkin<MAX_PLAYERS>,
     DB: Database
-    //PlayerText:loginFade[MAX_PLAYERS]
 ;
 
 forward UpdateClock();
@@ -35,8 +37,15 @@ public OnRconLoginAttempt(ip[], password[], success)
     {
         if (!IsPlayerConnected(id)) continue;
         GetPlayerIp(id, ipAddress, sizeof(ipAddress));
-        if (!strcmp(ip, ipAddress, true)){ GetPlayerName(id, name, sizeof(name)); playerid = id; authorizedLogin = true; }
+        if (!strcmp(ip, ipAddress, true)){ GetPlayerName(id, name, sizeof(name)); playerid = id; }
     }
+
+    // ha admin, ne baszogassa
+    for (new n = 0; n < countAdmins; n++)
+    {
+        if(!strcmp(name, Admins[n])) authorizedLogin = true;
+    }
+
     if (!success && playerid != -1 && !authorizedLogin)
     {
         printf("[Warning] RCON login attempt from IP %s, player %s (ID: %i). Kicking player.", ip, name, playerid);
@@ -106,20 +115,30 @@ public OnGameModeExit()
     return 1;
 }
 
+public OnPlayerUpdate(playerid)
+{
+    printf("[OnPlayerUpdate] in hand: %i g_PlayerCash: %i", GetPlayerMoney(playerid), g_PlayerCash[playerid]);
+    if(Bit1_Get(g_PlayerLogged, playerid) == 1 && IsPlayerSpawned(playerid))
+    {
+        // what the actual fuck is this doing ????
+        if (GetPlayerMoney(playerid) != g_PlayerCash[playerid])
+        {
+            printf("[OnPlayerUpdate] desynced: in hand: %i, g_PlayerCash: %i", GetPlayerMoney(playerid), g_PlayerCash[playerid]);
+            ResetPlayerMoney(playerid);
+            GivePlayerMoney(playerid, g_PlayerCash[playerid]);
+            return 1;
+        }
+    }
+    return 1;
+}
+
 public OnPlayerSpawn(playerid)
 {
     new name[24]; GetPlayerName(playerid, name, sizeof(name));
-    if (!strcmp(name, "The_Balazs") && !IsPlayerAdmin(playerid))
-    {
-        SetPlayerAdmin(playerid, true);
-        SendClientMessage(playerid, -1, "SERVER: You are automatically logged in as admin.");
-    }
-
     TextDrawShowForPlayer(playerid, Clock);
-    SetPlayerSkin(playerid, Bit16_Get(g_PlayerSkin, playerid));
 	if(Bit1_Get(g_PlayerLogged, playerid) == 0)
 	{
-        printf("[kick] Kickelve ID %i, mert nem volt belepve es lespawnolt.", playerid);
+        printf("[kick] Kickelve %s (ID: %i), mert nem volt belepve es lespawnolt.", name, playerid);
 	    Kick(playerid);
  	}
 }
@@ -130,7 +149,8 @@ public OnClientCheckResponse(playerid, actionid, memaddr, retndata)
     if (actionid == 0x48)
     {
         new name[24];
-        printf("WARNING: The player %s doesn't seem to be using a regular computer!", GetPlayerName(playerid, name, sizeof(name)));
+        GetPlayerName(playerid, name, sizeof(name));
+        printf("WARNING: The player %s doesn't seem to be using a regular computer!", name);
         Kick(playerid);
     }
     return 1;
@@ -168,7 +188,7 @@ public CameraPan(playerid)
 
 public SpawnPlayerFromCamPan(playerid)
 {
-    SetSpawnInfo(playerid, NO_TEAM, 0, 1877.737792, -1366.890625, 14.640625, 180, WEAPON_FIST, 0, WEAPON_FIST, 0, WEAPON_FIST, 0);
+    SetSpawnInfo(playerid, NO_TEAM, Bit16_Get(g_PlayerSkin, playerid), 1877.737792, -1366.890625, 14.640625, 180, WEAPON_FIST, 0, WEAPON_FIST, 0, WEAPON_FIST, 0);
     KillTimer(CameraPanTimer[playerid]); // ???? ez valamiert neha nem torli rendesen
     DeletePVar(playerid, "camera");
     SetPlayerWeather(playerid, 0);
@@ -242,7 +262,6 @@ public OnPlayerDisconnect(playerid, reason)
 {
     new playerName[MAX_PLAYER_NAME];
     GetPlayerName(playerid, playerName, MAX_PLAYER_NAME);
-
     new reasons[5][] =
     {
         "kifagyott vagy crashelt",
@@ -251,6 +270,7 @@ public OnPlayerDisconnect(playerid, reason)
         "eltûnt",
         "automatikusan ki lett rúgva"
     };
+
     SendClientMessageToAll(-1, "{AAAAAA}%s {DDDDDD}%s.", playerName, reasons[reason]);
 
     // ez nem feltetlen a legokosabb dontes, viszont server load szempontjabol szerintem jobb mintha minden skinvaltas utan mentene
@@ -258,11 +278,11 @@ public OnPlayerDisconnect(playerid, reason)
     // docs szerint open.mp alatt az OnPlayerDisconnect alatt is elerhetoek a jatekos cuccai, szoval ezzel baj se lehet (remelem)
     DB_ExecuteQuery(Database, "UPDATE `Players` SET `Skin_ID` = %i WHERE `Player` = '%s'", GetPlayerSkin(playerid), playerName);
 
+    Bit1_Set(g_PlayerLogged, playerid, false);
     Bit1_Set(g_PlayerIsSpectating, playerid, false);
-    if(Bit1_Get(g_PlayerLogged, playerid) == 1)
-    {
-        Bit1_Set(g_PlayerLogged, playerid, false);
-    }
+    Bit8_Set(g_AdminLevel, playerid, 0);
+    Bit16_Set(g_PlayerSkin, playerid, 0);
+    g_PlayerCash[playerid] = 0;
     return 1;
 }
 
@@ -280,6 +300,7 @@ public OnPlayerDeath(playerid, killerid, WEAPON:reason)
 
 public OnPlayerTakeDamage(playerid, issuerid, Float:amount, WEAPON:weaponid, bodypart)
 {
+    // fejloves 1 hit
     if (issuerid != INVALID_PLAYER_ID && bodypart == 9)
     {
         SetPlayerHealth(playerid, 0.0);
@@ -289,15 +310,17 @@ public OnPlayerTakeDamage(playerid, issuerid, Float:amount, WEAPON:weaponid, bod
 
 public OnPlayerClickMap(playerid, Float:fX, Float:fY, Float:fZ)
 {
-    SetPlayerInterior(playerid, 0);
-	if(IsPlayerInAnyVehicle(playerid) && GetPlayerVehicleSeat(playerid) == 0)
+    if (GetPlayerInterior(playerid) != 0)
     {
-		new Float:x, Float:y, Float:z;
+        SendClientMessage(playerid, 0xFF0000FF, "Ez a funkció {AA0000}épületbelsõkben {FF0000}nem használható.");
+        return 1;
+    }
+
+    // SetPlayerInterior(playerid, 0);
+	if(IsPlayerInAnyVehicle(playerid) && GetVehicleDriver(GetPlayerVehicleID(playerid)) == playerid)
+    {
         new vehicleid = GetPlayerVehicleID(playerid);
-        SetPlayerPosFindZ(playerid, fX, fY, fZ);
-		GetPlayerPos(playerid, x, y, z);
-        SetVehiclePos(vehicleid, x, y, z);
-        PutPlayerInVehicle(playerid, vehicleid, 0);
+        SetVehiclePos(vehicleid, fX, fY, fZ);
     }
 	else
 	{
@@ -346,15 +369,16 @@ Dialog:LOGIN(playerid, response, listitem, inputtext[])
             Bit16_Set(g_PlayerSkin, playerid, strval(Field));
             DB_GetFieldStringByName(Result, "Score", Field);
             SetPlayerScore(playerid, strval(Field));
-            DB_GetFieldStringByName(Result, "clampCash", Field, 30);
-            GivePlayerMoney(playerid, strval(Field));
-            DB_GetFieldStringByName(Result, "Admin", Field, 8);
+            DB_GetFieldStringByName(Result, "clampCash", Field, 21);
+            g_PlayerCash[playerid] = strval(Field);
+            GivePlayerMoney(playerid, g_PlayerCash[playerid]);
+            DB_GetFieldStringByName(Result, "Admin", Field, 4);
             Bit8_Set(g_AdminLevel, playerid, strval(Field));
             Bit1_Set(g_PlayerLogged, playerid, true);
-            Bit1_Set(g_PlayerIsSpectating, playerid, 0); // visszakapcsolja a SPAWN gombot, es ezt el is menti 
-            SendClientMessage(playerid, 0x00FF00AA, "Sikeresen bejelentkeztél.");
+            Bit1_Set(g_PlayerIsSpectating, playerid, false); // visszakapcsolja a SPAWN gombot, es ezt el is menti 
             TogglePlayerSpectating(playerid, false);
-            SetTimerEx("SpawnPlayerFromCamPan", 250, false, "i", playerid);
+            SendClientMessage(playerid, 0x00FF00AA, "Sikeresen bejelentkeztél.");
+            SetTimerEx("SpawnPlayerFromCamPan", 500, false, "i", playerid);
         }
         // helytelen jelszo
         else
@@ -404,7 +428,7 @@ Dialog:REGISTER(playerid, response, listitem, inputtext[])
             SendClientMessage(playerid, 0x00FF00FF, "Sikeresen regisztráltad a {FFFFFF}%s {00FF00}nevet.", name);
             TogglePlayerSpectating(playerid, false);
             Bit1_Set(g_PlayerIsSpectating, playerid, 0); // visszakapcsolja a SPAWN gombot 
-            SetTimerEx("SpawnPlayerFromCamPan", 250, false, "i", playerid);
+            SetTimerEx("SpawnPlayerFromCamPan", 500, false, "i", playerid);
         }
         return 1;
     }
@@ -458,4 +482,45 @@ CMD:reg(playerid, params[])
 			SendClientMessage(playerid, 0xFF0000AA, "Ehhez nincs jogod.");
 			return 1;
 		}
+}
+
+// penz allitas
+CMD:doubloon(playerid, params[])
+{
+	new
+		DBResult:Result,
+		op,
+		inputDollars,
+		dollars[35],
+		clampDollars[25],
+		name[24]
+	;
+	GetPlayerName(playerid, name, 24);
+	if (!sscanf(params, "ii", op, inputDollars))
+	{
+		if (op == 1) DB_ExecuteQuery(Database, "UPDATE `Players` SET `Cash` = `Cash` + %i WHERE `Player` = '%s'", inputDollars, DB_Escape(name));
+		else if (op == 0) DB_ExecuteQuery(Database, "UPDATE `Players` SET `Cash` = `Cash` - %i WHERE `Player` = '%s'", inputDollars, DB_Escape(name));
+
+		Result = DB_ExecuteQuery(Database,\
+		"SELECT printf('%%d', CASE \
+		WHEN `Cash` < -999999999 THEN -999999999 \
+		WHEN `Cash` > 999999999 THEN 999999999 \
+		ELSE `Cash` END) AS clampCash, \
+		printf('%%,d', `Cash`) as fCash \
+		FROM `Players` WHERE `Player` = '%s'", DB_Escape(name));
+		DB_GetFieldStringByName(Result, "fCash", dollars, 30);
+		DB_GetFieldStringByName(Result, "clampCash", clampDollars, 25);
+		SendClientMessage(playerid, 0x00AA00FF, "$%s", dollars);
+		g_PlayerCash[playerid] = strval(clampDollars);
+		ResetPlayerMoney(playerid);
+		GivePlayerMoney(playerid, g_PlayerCash[playerid]);
+		DB_FreeResultSet(Result);
+        printf("[/doubloon] in hand: %i, g_PlayerCash: %i", GetPlayerMoney(playerid), g_PlayerCash[playerid]);
+		return 1;
+	}
+	else
+	{
+		SendClientMessage(playerid, 0xFF0000AA, "/doubloon <0/1> <$>");
+		return 1;
+	}
 }
