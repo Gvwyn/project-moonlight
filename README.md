@@ -5,7 +5,7 @@
 - **easyDialog:** konnyebb Dialog kezeles + anti-spoofing
 - **sscanf:** iZCMD-vel egybeoltve hasznalom string beolvasashoz
 - **rBits:** player valtozok kezelese kisebb-nagyobb bit valtozonkent
-- **Pawn.Regex**: regex
+- **Pawn.Regex**: regex expressions
 
 ## changelog
 - BUILD 0-26
