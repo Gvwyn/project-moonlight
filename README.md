@@ -1,4 +1,13 @@
 # Project Hell - SA:MP szerver @ open.mp
+## jelenlegi includeok, pluginok stb...
+- **open.mp 1.2.0.2670**
+- **iZCMD:** parancsok konnyu kezelese
+- **easyDialog:** konnyebb Dialog kezeles + anti-spoofing
+- **sscanf:** iZCMD-vel egybeoltve hasznalom string beolvasashoz
+- **rBits:** player valtozok kezelese kisebb-nagyobb bit valtozonkent
+- **Pawn.Regex**: regex
+
+## changelog
 - BUILD 0-26
     - Y_INI levaltva -> SQLite
     - login&reg rendszer, ehhez meno hatter
@@ -22,6 +31,6 @@
     - /v parancs mostmar letiltja a vonatokat (ezeket nem lehet igy spawnolni)
     - mostmar nem rakja vissza 60 sec utan a jarmuveket oda, ahova lespawnoltuk
     - anti-cheat kezdete: nem tudsz tobbe penzt addolni magadnak csalassal (ott a /doubloon dumbass)
-    - /setadmin parancs, plusz egyeb admin parancsok
+    - /setadmin parancs, plusz egyeb admin parancsok -> javitva az admin szintek lekerese
 
 > language support soon!

@@ -458,19 +458,20 @@ public OnPlayerCommandReceived(playerid,cmdtext[])
 
 CMD:setadmin(playerid, params[])
 {
-    if (5 == Bit1_Get(g_AdminLevel, playerid))
+    if (4 == Bit8_Get(g_AdminLevel, playerid))
     {
         new who, level, name[24];
         if (!sscanf(params, "ii", who, level))
         {
             GetPlayerName(who, name, sizeof(name));
+            DB_ExecuteQuery(Database, "UPDATE `Players` SET `Admin` = %i WHERE `Player` = '%s'", level, name);
             SendClientMessage(playerid, 0xAA0000FF, "%s (%i) admin szintje mostantól %s {AA0000}(%i).", name, who, AdminLevels[level], level);
             Bit8_Set(g_AdminLevel, who, level);
             return 1;
         }
         else
         {
-            SendClientMessage(playerid, 0xFF0000AA, "/setadmin <ki> <szint>");
+            SendClientMessage(playerid, 0xFF0000AA, "/setadmin <kit> <szint>");
             return 1;
         }
     }
@@ -483,7 +484,8 @@ CMD:setadmin(playerid, params[])
 
 CMD:reg(playerid, params[])
 {
-    if (2 <= Bit1_Get(g_AdminLevel, playerid))
+    printf("%i", Bit8_Get(g_AdminLevel, playerid));
+    if (2 <= Bit8_Get(g_AdminLevel, playerid))
     {
         new name[MAX_PLAYER_NAME];
         GetPlayerName(playerid, name, sizeof(name));

@@ -34,6 +34,7 @@ Dialog:MGs(playerid, response, listitem, inputtext[])
 	{
 		if (listitem == 0)
 		{
+			Dialog_Close(playerid);
 			// SendClientMessage(playerid, 0xFF0000AA, "Ezen még dolgozom, nézz vissza késõbb.");
 			Dialog_Show(playerid, ScaleSetup, DIALOG_STYLE_LIST,\
 			"{3D85C6}Mérleg minigame inditás",\

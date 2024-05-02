@@ -2,9 +2,10 @@
 #include <open.mp>
 #include <global_vars>
 #include <easyDialog>
-#include <izcmd>
 #include <rBits>
+#include <izcmd>
 #include <sscanf2>
+#include <Pawn.Regex>
 
 new DB: Database;
 
@@ -175,15 +176,15 @@ CMD:v(playerid, params[])
 	{
 	    if (vehicleid >= 400 && vehicleid <= 611)
 	    {
-			if (vehicleid != 449 || vehicleid != 537 || vehicleid != 538 || vehicleid != 569 || vehicleid != 570 || vehicleid != 590)
+			if (vehicleid != 449 && vehicleid != 537 && vehicleid != 538 && vehicleid != 569 && vehicleid != 570 && vehicleid != 590)
 			{
-	        new Float:x, Float:y, Float:z, Float:angle;
-		    GetPlayerPos(playerid, x, y, z);
-		    GetPlayerFacingAngle(playerid, angle);
-			DestroyVehicle(GetPVarInt(playerid, "veh"));
-		    SetPVarInt(playerid, "veh", CreateVehicle(vehicleid, x, y, z, angle, -1, -1, -1) );
-			PutPlayerInVehicle(playerid, GetPVarInt(playerid, "veh"), 0);
-			return 1;
+				new Float:x, Float:y, Float:z, Float:angle;
+				GetPlayerPos(playerid, x, y, z);
+				GetPlayerFacingAngle(playerid, angle);
+				DestroyVehicle(GetPVarInt(playerid, "veh"));
+				SetPVarInt(playerid, "veh", CreateVehicle(vehicleid, x, y, z, angle, -1, -1, -1) );
+				PutPlayerInVehicle(playerid, GetPVarInt(playerid, "veh"), 0);
+				return 1;
 			}
 			else 
 			{
@@ -293,7 +294,6 @@ CMD:stats(playerid, params[])
 	{FFFFFF}Pénz: \t\t{00AA00}$%s\n{FFFFFF}Ebbõl kézben: \t{007700}$%s\n\
 	{FFFFFF}Pont: \t\t{DDDDDD}%s db", "{00FF00}OK", "", uid, GetPlayerColor(playerid) >>> 8, name, AdminLevels[strval(admin)], admin, pass, dollars, dollarsInHand, score);
 	DB_FreeResultSet(Result);
-	//printf("%i %i, %s", id, passingID, name);
 	return 1;
 }
 
