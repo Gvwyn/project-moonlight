@@ -1,13 +1,17 @@
 # Project Hell - SA:MP szerver @ open.mp
-## jelenlegi includeok, pluginok stb...
-- **open.mp 1.2.0.2670**
-- **iZCMD:** parancsok konnyu kezelese
-- **easyDialog:** konnyebb Dialog kezeles + anti-spoofing
-- **sscanf:** iZCMD-vel egybeoltve hasznalom string beolvasashoz
-- **rBits:** player valtozok kezelese kisebb-nagyobb bit valtozonkent
-- **Pawn.Regex**: regex expressions
+
+### jelenlegi includeok, pluginok stb...
+
+- **[open.mp 1.2.0.2670](https://github.com/openmultiplayer)**  
+- **[iZCMD](https://github.com/YashasSamaga/I-ZCMD)**
+- **[easyDialog](https://github.com/Awsomedude/easyDialog)**
+- **[sscanf](https://github.com/Y-Less/sscanf/)**
+- **[rBits](https://github.com/Mergevos/pawn-rbits)**
+- **[Pawn.Regex](https://github.com/katursis/Pawn.Regex)**
+
 
 ## changelog
+
 - BUILD 0-26
     - Y_INI levaltva -> SQLite
     - login&reg rendszer, ehhez meno hatter
