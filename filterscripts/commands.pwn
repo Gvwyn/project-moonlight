@@ -297,6 +297,14 @@ CMD:stats(playerid, params[])
 	return 1;
 }
 
+CMD:kill(playerid, params[])
+{
+	SendClientMessage(playerid, 0x330000AA, "Megölted magad. †");
+	SetPlayerHealth(playerid, 0.0);
+	return 1;
+}
+CMD:kys(playerid, params[]) cmd_kill(playerid, params);
+
 // skin allitas
 // a skint csak OnPlayerDisconnect-nel fogja elmenteni !!!!
 CMD:skin(playerid, params[]) 

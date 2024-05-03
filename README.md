@@ -36,5 +36,8 @@
     - mostmar nem rakja vissza 60 sec utan a jarmuveket oda, ahova lespawnoltuk
     - anti-cheat kezdete: nem tudsz tobbe penzt addolni magadnak csalassal (ott a /doubloon dumbass)
     - /setadmin parancs, plusz egyeb admin parancsok -> javitva az admin szintek lekerese
+    - /kill & /kys parancs †
+    - updated chat kiiras formatum
+        - PLAYER (ID): \<TEXT\>
 
 > language support soon!

@@ -1,5 +1,6 @@
 #include <open.mp>
 #include <global_vars> // 1 fajl, amiben global valtozok vannak
+#include <Pawn.Regex>
 #include <easyDialog>
 #include <rBits>
 #include <izcmd>
@@ -190,7 +191,7 @@ public CameraPan(playerid)
 
 public SpawnPlayerFromCamPan(playerid)
 {
-    SetSpawnInfo(playerid, NO_TEAM, Bit16_Get(g_PlayerSkin, playerid), 1877.737792, -1366.890625, 14.640625, 180, WEAPON_FIST, 0, WEAPON_FIST, 0, WEAPON_FIST, 0);
+    SetSpawnInfo(playerid, NO_TEAM, Bit16_Get(g_PlayerSkin, playerid), 1814.720214, -1341.801635, 29.984375, 270, WEAPON_FIST, 0, WEAPON_FIST, 0, WEAPON_FIST, 0);
     KillTimer(CameraPanTimer[playerid]); // ???? ez valamiert neha nem torli rendesen
     DeletePVar(playerid, "camera");
     SetPlayerWeather(playerid, 0);
@@ -230,6 +231,7 @@ public OnPlayerConnect(playerid)
     
     Bit1_Set(g_PlayerLogged, playerid, false);
 
+    SendDeathMessage(playerid, INVALID_PLAYER_ID, 200);
 	SendClientMessageToAll(-1, "{00FFFF}%s {FFFFFF}belépett a szerverre.", name);
     if(DB_GetRowCount(Result))
     {
@@ -272,6 +274,7 @@ public OnPlayerDisconnect(playerid, reason)
         "eltûnt",
         "automatikusan ki lett rúgva"
     };
+    SendDeathMessage(playerid, INVALID_PLAYER_ID, 200);
     if (reason != 2) SendClientMessageToAll(-1, "{AAAAAA}%s {DDDDDD}%s.", playerName, reasons[reason]);
 
     // ez nem feltetlen a legokosabb dontes, viszont server load szempontjabol szerintem jobb mintha minden skinvaltas utan mentene
@@ -289,8 +292,11 @@ public OnPlayerDisconnect(playerid, reason)
 
 public OnPlayerText(playerid, text[])
 {
-    SetPlayerChatBubble(playerid, text, 0xEED2EEAA, 100.0, 10000);
-    return 1;
+    new name[24]; GetPlayerName(playerid, name, sizeof(name));
+    new color = GetPlayerColor(playerid) >>> 8;
+    SendClientMessageToAll(color, "%s (%i): {FFFFFF}%s", name, playerid, text);
+    SetPlayerChatBubble(playerid, text, -1, 100.0, 10000);
+    return 0;
 }
 
 public OnPlayerDeath(playerid, killerid, WEAPON:reason)
@@ -340,6 +346,22 @@ public OnPlayerStateChange(playerid, PLAYER_STATE:newstate, PLAYER_STATE:oldstat
 		// SetVehicleHealth(vehicleid, INFINITY); // hat ez nem igy mukodik xdd
     }
     return 1;
+}
+
+public OnPlayerCommandReceived(playerid,cmdtext[])
+{
+    if(Bit1_Get(g_PlayerLogged, playerid) == 0)
+    {
+        SendClientMessage(playerid, 0xFF0000FF, "Nem használhatsz parancsokat addig, amíg nem jelentkezel be.");
+        return 0;
+    }
+
+    else if (!IsPlayerSpawned(playerid) || Bit1_Get(g_PlayerIsSpectating, playerid) == 1)
+    {
+        SendClientMessage(playerid, 0xFF0000FF, "Nem használhatsz parancsokat addig, amíg nem spawnolsz le.");
+        return 0;
+    }
+	return 1;
 }
 
 Dialog:LOGIN(playerid, response, listitem, inputtext[])
@@ -438,22 +460,6 @@ Dialog:REGISTER(playerid, response, listitem, inputtext[])
         printf("[kick] Kicking player ID %i %s for trying to skip the registration process.", playerid, name);
         return Kick(playerid);
     }
-}
-
-public OnPlayerCommandReceived(playerid,cmdtext[])
-{
-    if(Bit1_Get(g_PlayerLogged, playerid) == 0)
-    {
-        SendClientMessage(playerid, 0xFF0000FF, "Nem használhatsz parancsokat addig, amíg nem jelentkezel be.");
-        return 0;
-    }
-
-    else if (!IsPlayerSpawned(playerid) || Bit1_Get(g_PlayerIsSpectating, playerid) == 1)
-    {
-        SendClientMessage(playerid, 0xFF0000FF, "Nem használhatsz parancsokat addig, amíg nem spawnolsz le.");
-        return 0;
-    }
-	return 1;
 }
 
 CMD:setadmin(playerid, params[])
