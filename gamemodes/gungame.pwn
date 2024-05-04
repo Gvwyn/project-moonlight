@@ -16,6 +16,14 @@ new
     DB: Database
 ;
 
+// X.X.X.X.X:PORT VAGY DOMAIN NEVEKET MEGFOGJA
+stock AdvertCheck(text[])
+{
+    static Regex:regex;
+    if (!regex) regex = Regex_New("(?:.*\\b(?:\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|(?:[\\w-]+\\.)+\\w{2,})(?::\\d{1,5})?\\b.*)|(?:.*\\b(?:\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|(?:[\\w-]+\\.)+\\w{2,})\\b.*)");
+    return Regex_Check(text, regex);
+}
+
 forward UpdateClock();
 forward KickPlayer(playerid);
 forward BanPlayer(playerid, reason[]);
@@ -103,13 +111,12 @@ public OnGameModeInit()
 	SetGameModeText(GAMEMODE);
     SendRconCommand("game.map %s", VERSION);
 
-    // /tdpos 546.5 21 .65 2.4 3
     new hours, minutes, seconds;
     gettime(hours, minutes, seconds);
     Clock = TextDrawCreate(546.5, 21.0, "%02d:%02d", hours, minutes);
 	TextDrawLetterSize(Clock, 0.65, 2.4);
 	TextDrawFont(Clock, TEXT_DRAW_FONT_3);
-    SetTimer("UpdateClock", 5000, true);
+    SetTimer("UpdateClock", 1000, true);
     return 1;
 }
 
@@ -225,7 +232,7 @@ public CameraPan(playerid)
 
 public SpawnPlayerFromCamPan(playerid)
 {
-    SetSpawnInfo(playerid, NO_TEAM, Bit16_Get(g_PlayerSkin, playerid), 1814.720214, -1341.801635, 29.984375, 270, WEAPON_FIST, 0, WEAPON_FIST, 0, WEAPON_FIST, 0);
+    SetSpawnInfo(playerid, NO_TEAM, Bit16_Get(g_PlayerSkin, playerid), 1871.900878, -1320.397827, 49.414062, 180.0, WEAPON_FIST, 0, WEAPON_FIST, 0, WEAPON_FIST, 0);
     KillTimer(CameraPanTimer[playerid]); // ???? ez valamiert neha nem torli rendesen
     DeletePVar(playerid, "camera");
     SetPlayerWeather(playerid, 0);
@@ -326,6 +333,13 @@ public OnPlayerDisconnect(playerid, reason)
 
 public OnPlayerText(playerid, text[])
 {
+    if (AdvertCheck(text) == 1)
+    {
+        SendClientMessage(playerid, 0xFF0000FF, "Nem írhatsz ki IP címeket. {FF5555}Ha nem IP címet próbáltál kiírni, jelezd felénk.");
+        // SetTimerEx("KickPlayer", 250, false, playerid);
+        return 0;
+    }
+
     new name[24]; GetPlayerName(playerid, name, sizeof(name));
     new color = GetPlayerColor(playerid) >>> 8;
     SendClientMessageToAll(color, "%s (%i): {FFFFFF}%s", name, playerid, text);
@@ -498,12 +512,12 @@ Dialog:REGISTER(playerid, response, listitem, inputtext[])
 
 CMD:setadmin(playerid, params[])
 {
-    if (4 == Bit8_Get(g_AdminLevel, playerid))
+    if (4 == Bit8_Get(g_AdminLevel, playerid) || IsPlayerAdmin(playerid))
     {
         new who, level, name[24];
         if (!sscanf(params, "ii", who, level))
         {
-            GetPlayerName(who, name, sizeof(name));
+            GetPlayerName(who, name, sizeof(name));            
             DB_ExecuteQuery(Database, "UPDATE `Players` SET `Admin` = %i WHERE `Player` = '%s'", level, name);
             SendClientMessage(playerid, 0xAA0000FF, "%s (%i) admin szintje mostantól %s {AA0000}(%i).", name, who, AdminLevels[level], level);
             Bit8_Set(g_AdminLevel, who, level);
@@ -523,9 +537,33 @@ CMD:setadmin(playerid, params[])
 }
 
 
+CMD:t(playerid, params[])
+{
+    Dialog_Show(playerid, TP, DIALOG_STYLE_MSGBOX, "{5555FF}A szerver publikus teleportjai",\
+    "{00FFFF}/ls {FFFFFF}Los Santos\n\
+    {00FFFF}/lsa {FFFFFF}Los Santos Airport\n\
+    {00FFFF}/sf {FFFFFF}San Fierro\n\
+    {00FFFF}/sfa {FFFFFF}San Fierro Airport\n\
+    {00FFFF}/lv {FFFFFF}Las Venturas\n\
+    {00FFFF}/lva {FFFFFF}San Fierro Airport\n\n\
+    {00FFFF}/sbeach {FFFFFF}Santa Maria Beach\n\
+    {00FFFF}/bm {FFFFFF}Bayside Marina\n\
+    ", "OK", "");
+}
+
 // publikus teleportok listaja
-CMD:ls(playerid, params[]) TeleportPlayerToPublicTp(playerid, true, 2492.593750, -1668.676391, 13.343750, 90.0);
-CMD:lv(playerid, params[]) TeleportPlayerToPublicTp(playerid, true, 2102.577392, 1097.929687, 10.820312, 0.0);
+// *innentol kezdodnek a publikus teleportok, amiket barki hasznalhat
+
+//CMD:<nev>(playerid, params[]) { TeleportPlayerToPublicTp(playerid, true, 0.0, 0.0, 0.0, 0.0); return 1; }
+CMD:ls(playerid, params[])  { TeleportPlayerToPublicTp(playerid, true, 2492.593750, -1668.676391, 13.343750, 90.0); return 1; }
+CMD:lsa(playerid, params[]) { TeleportPlayerToPublicTp(playerid, true, 1939.983032, -2493.925292, 13.539117, 90.0); return 1; }
+CMD:sf(playerid, params[])  { TeleportPlayerToPublicTp(playerid, true, -1754.233398, 952.028137, 24.742187, 180.0); return 1; }
+CMD:sfa(playerid, params[]) { TeleportPlayerToPublicTp(playerid, true, -1530.291137, -37.786216, 14.148437, 315.0); return 1; }
+CMD:lv(playerid, params[])  { TeleportPlayerToPublicTp(playerid, true, 2118.114257, 1333.812500, 10.547391, 90.0); return 1; }
+CMD:lva(playerid, params[]) { TeleportPlayerToPublicTp(playerid, true, 1477.515869, 1697.797729, 10.820308, 180.0); return 1; }
+
+CMD:sbeach(playerid, params[])  { TeleportPlayerToPublicTp(playerid, true, 336.527404, -1798.481811, 4.722227, 90.0); return 1; }
+CMD:bm(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, -2261.533447, 2318.244384, 4.812500, 0.0); return 1; }
 
 // publikus teleportok vege
 

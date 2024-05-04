@@ -30,15 +30,16 @@
 - BUILD 28
     - minigame menu letrehozva
         - elkezdtem a merleg minigamet, amit White ajanlott, innen is puszi
-    - easyDialog include-t hasznalok mostmar, bolond dialog spoofing ellen
+    - **easyDialog** include-t hasznalok mostmar, bolond dialog spoofing ellen
     - ora jobb fentre, HH:MM formatumban (meg lehet csinositani rajta)
     - /v parancs mostmar letiltja a vonatokat (ezeket nem lehet igy spawnolni)
     - mostmar nem rakja vissza 60 sec utan a jarmuveket oda, ahova lespawnoltuk
     - anti-cheat kezdete: nem tudsz tobbe penzt addolni magadnak csalassal (ott a /doubloon dumbass)
     - /setadmin parancs, plusz egyeb admin parancsok -> javitva az admin szintek lekerese
-    - /kill & /kys parancs †
+    - /kill & /kys parancs
     - updated chat kiiras formatum
         - PLAYER (ID): \<TEXT\>
-    - publikus teleportok (ls, lv, sf etc.) -> ezeket konnyu lesz boviteni
+    - **publikus teleportok** (ls, lv, sf etc.) -> ezeket konnyu lesz boviteni
+    - **anti-ip**-kiiras, 5 sorban Regex-nek koszonhetoen (gecisok idobe telt mukodesre birni...)
 
 > language support soon!

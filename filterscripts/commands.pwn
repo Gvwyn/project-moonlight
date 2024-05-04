@@ -136,7 +136,7 @@ CMD:pos(playerid, params[])
 	new Float:x, Float:y, Float:z, Float:angle;
 	GetPlayerPos(playerid, x, y, z);
 	GetPlayerFacingAngle(playerid, angle);
-	printf("%f, %f, %f, -- %f", x, y, z, angle);
+	if (IsPlayerAdmin(playerid)) printf("%f, %f, %f, %i", x, y, z, floatround(angle));
 	SendClientMessage(playerid, 0x33FFAAAA, "Jelenlegi poziciód: %f, %f, %f; forgásod: %.2f", x, y, z, angle);
 	return 1;
 }
