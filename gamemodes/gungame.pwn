@@ -549,6 +549,7 @@ CMD:t(playerid, params[])
     {00FFFF}/sbeach {FFFFFF}Santa Maria Beach\n\
     {00FFFF}/bm {FFFFFF}Bayside Marina\n\
     ", "OK", "");
+    return 1;
 }
 
 // publikus teleportok listaja
