@@ -20,6 +20,7 @@ forward UpdateClock();
 forward KickPlayer(playerid);
 forward BanPlayer(playerid, reason[]);
 forward SetPlayerSkinFromFs(playerid, skinid); // Ez frissiti a g_PlayerSkin[playerid]-t
+forward TeleportPlayerToPublicTp(playerid, areVehiclesAllowed, Float:x, Float:y, Float:z, Float:angle);
 forward CameraPan(playerid);
 forward SpawnPlayerFromCamPan(playerid);
 
@@ -166,8 +167,41 @@ public UpdateClock()
 
 public KickPlayer(playerid) Kick(playerid);
 public BanPlayer(playerid, reason[]) BanEx(playerid, reason);
-
 public SetPlayerSkinFromFs(playerid, skinid) Bit16_Set(g_PlayerSkin, playerid, skinid);
+
+// az osszes publikus teleportot ezzel lehet hasznalni
+// igy 1x kell a logikat megirnom, utana a teleportokat 1 sorral be tudom rakni
+public TeleportPlayerToPublicTp(playerid, areVehiclesAllowed, Float:x, Float:y, Float:z, Float:angle)
+{
+    if (GetPlayerInterior(playerid) != 0) 
+    {
+        SendClientMessage(playerid, 0xFF0000FF, "Nem teleportálhatsz épületbelsõkbõl.");
+        return 1;
+    }
+
+    // ha a jatekos BENNE van egy jarmube es a vezeto (0)
+    // ha minden igaz GetPlayerVehicleSeat (-1)-et dob vissza ha nincs jarmube
+    if(GetPlayerVehicleSeat(playerid) == 0)
+    {
+        if (!areVehiclesAllowed)
+        {
+            SendClientMessage(playerid, 0xFF0000FF, "Ide nem teleportálhatsz jármûvel.");
+            return 1;
+        }
+        new vehicleid = GetPlayerVehicleID(playerid);
+        SetVehicleZAngle(vehicleid, angle);
+        SetVehiclePos(vehicleid, x, y, z);
+        SetCameraBehindPlayer(playerid);
+        return 1; 
+    }
+    else
+    {
+        SetPlayerFacingAngle(playerid, angle);
+        SetPlayerPos(playerid, x, y, z);
+        SetCameraBehindPlayer(playerid);
+        return 1;
+    }
+}
 
 // AGYBASZAS
 public CameraPan(playerid)
@@ -319,7 +353,7 @@ public OnPlayerClickMap(playerid, Float:fX, Float:fY, Float:fZ)
 {
     if (GetPlayerInterior(playerid) != 0)
     {
-        SendClientMessage(playerid, 0xFF0000FF, "Ez a funkció {AA0000}épületbelsõkben {FF0000}nem használható.");
+        SendClientMessage(playerid, 0xFF0000FF, "Nem teleportálhatsz épületbelsõkbõl.");
         return 1;
     }
 
@@ -487,6 +521,13 @@ CMD:setadmin(playerid, params[])
         return 1;
     }
 }
+
+
+// publikus teleportok listaja
+CMD:ls(playerid, params[]) TeleportPlayerToPublicTp(playerid, true, 2492.593750, -1668.676391, 13.343750, 90.0);
+CMD:lv(playerid, params[]) TeleportPlayerToPublicTp(playerid, true, 2102.577392, 1097.929687, 10.820312, 0.0);
+
+// publikus teleportok vege
 
 CMD:reg(playerid, params[])
 {

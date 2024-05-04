@@ -39,5 +39,6 @@
     - /kill & /kys parancs †
     - updated chat kiiras formatum
         - PLAYER (ID): \<TEXT\>
+    - publikus teleportok (ls, lv, sf etc.) -> ezeket konnyu lesz boviteni
 
 > language support soon!

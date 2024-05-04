@@ -122,6 +122,7 @@ CMD:help(playerid, params[])
 	{00FFFF}/set {00AAAA}<w> <h> <m> \t{FFFFFF}Idõjárás és idõ állítása. {AAAAAA}<idõjárás> <óra> <perc>\n\
 	{00FFFF}/pos\t\t\t{FFFFFF}Jelenlegi pozíció lekérése.\n\
 	{00FFFF}/skin {00AAAA}<ID> \t\t{FFFFFF}Skin váltás.\n\
+	{00FFFF}/kill\t\t\t{FFFFFF}Meghalsz.\n\
 	{00FFFF}/sound {00AAAA}<hang_ID> \t{FFFFFF}Játékbeli hang lejátszása ID alapján.\n\
 	{00FFFF}/ghost \t\t\t{FFFFFF}Szellem mód ki- és bekapcsolása.\n\
 	{00FFFF}/doubloon {00AAAA}<op> <$>\t{FFFFFF}Pénzt tudsz adni, illetve elvenni. {AAAAAA}<op> 0 kivonás, 1 hozzáadás\
@@ -299,9 +300,15 @@ CMD:stats(playerid, params[])
 
 CMD:kill(playerid, params[])
 {
-	SendClientMessage(playerid, 0x330000AA, "Megölted magad. †");
-	SetPlayerHealth(playerid, 0.0);
-	return 1;
+	new Float:health;
+	GetPlayerHealth(playerid, health);
+	if(IsPlayerSpawned(playerid) && health <= 0.0)
+	{
+		SendClientMessage(playerid, 0x330000AA, "Megölted magad. †");
+		SetPlayerHealth(playerid, 0.0);
+		return 1;
+	}
+	else return 1;
 }
 CMD:kys(playerid, params[]) cmd_kill(playerid, params);
 
