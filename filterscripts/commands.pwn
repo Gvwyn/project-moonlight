@@ -110,27 +110,6 @@ CMD:cp(playerid, params[])
 	}
 }
 */
-
-// parancsok
-CMD:help(playerid, params[])
-{
-	Dialog_Show(playerid, CMDS, DIALOG_STYLE_MSGBOX, "{00FF00}A szerver parancsai",\
-	"{00FFFF}/help /cmds\t\t{FFFFFF}Ez a parancs.\n\
-	{00FFFF}/t\t\t\t{FFFFFF}Alapvetõ teleportok lekérése. {AAAAAA}A {FF0000}piros {AAAAAA}kijelöléssel a térképen bárhova teleportálhatsz.\n\
-	{00FFFF}/v {00AAAA}<ID>\t\t\t{FFFFFF}Jármûvek lehívása ID alapján.\n\
-	{006666}/mg\t\t\t{AAAAAA}Minigame választó megnyitása. {AA0000}(Fejlesztés alatt!)\n\
-	{00FFFF}/set {00AAAA}<w> <h> <m> \t{FFFFFF}Idõjárás és idõ állítása. {AAAAAA}<idõjárás> <óra> <perc>\n\
-	{00FFFF}/pos\t\t\t{FFFFFF}Jelenlegi pozíció lekérése.\n\
-	{00FFFF}/skin {00AAAA}<ID> \t\t{FFFFFF}Skin váltás.\n\
-	{00FFFF}/kill\t\t\t{FFFFFF}Meghalsz.\n\
-	{00FFFF}/sound {00AAAA}<hang_ID> \t{FFFFFF}Játékbeli hang lejátszása ID alapján.\n\
-	{00FFFF}/ghost \t\t\t{FFFFFF}Szellem mód ki- és bekapcsolása.\n\
-	{00FFFF}/doubloon {00AAAA}<op> <$>\t{FFFFFF}Pénzt tudsz adni, illetve elvenni. {AAAAAA}<op> 0 kivonás, 1 hozzáadás\
-	", "{00FF00}OK", "");
-	return 1;
-}
-CMD:cmds(playerid, params[]) { return cmd_help(playerid, params); }
-
 CMD:pos(playerid, params[])
 {
 	new Float:x, Float:y, Float:z, Float:angle;
@@ -177,11 +156,12 @@ CMD:v(playerid, params[])
 	{
 	    if (vehicleid >= 400 && vehicleid <= 611)
 	    {
+			new Float:x, Float:y, Float:z, Float:angle;
+			GetPlayerPos(playerid, x, y, z);
+			GetPlayerFacingAngle(playerid, angle);
+
 			if (vehicleid != 449 && vehicleid != 537 && vehicleid != 538 && vehicleid != 569 && vehicleid != 570 && vehicleid != 590)
 			{
-				new Float:x, Float:y, Float:z, Float:angle;
-				GetPlayerPos(playerid, x, y, z);
-				GetPlayerFacingAngle(playerid, angle);
 				DestroyVehicle(GetPVarInt(playerid, "veh"));
 				SetPVarInt(playerid, "veh", CreateVehicle(vehicleid, x, y, z, angle, -1, -1, -1) );
 				PutPlayerInVehicle(playerid, GetPVarInt(playerid, "veh"), 0);
@@ -189,7 +169,9 @@ CMD:v(playerid, params[])
 			}
 			else 
 			{
-				SendClientMessage(playerid, 0xFF0000AA, "Ezeket a jármûveket nem hívhatod le.");
+				DestroyVehicle(GetPVarInt(playerid, "veh"));
+				SetPVarInt(playerid, "veh", AddStaticVehicleEx(vehicleid, x, y, z, angle, -1, -1, -1) );
+				PutPlayerInVehicle(playerid, GetPVarInt(playerid, "veh"), 0);
 				return 1;
 			}
 	    }
@@ -201,7 +183,7 @@ CMD:v(playerid, params[])
 	}
 	else
 	{
-		SendClientMessage(playerid, 0xFF0000AA, "/v <ID>");
+		SendClientMessage(playerid, 0xFF0000AA, "/v <ID / név részlet>");
 		return 1;
 	}
 }
@@ -302,15 +284,15 @@ CMD:kill(playerid, params[])
 {
 	new Float:health;
 	GetPlayerHealth(playerid, health);
-	if(IsPlayerSpawned(playerid) && health <= 0.0)
+	if(IsPlayerSpawned(playerid) && health >= 0.0)
 	{
-		SendClientMessage(playerid, 0x330000AA, "Megölted magad. †");
+		SendClientMessage(playerid, 0xFF0000AA, "Megölted magad...");
 		SetPlayerHealth(playerid, 0.0);
 		return 1;
 	}
 	else return 1;
 }
-CMD:kys(playerid, params[]) cmd_kill(playerid, params);
+CMD:kys(playerid, params[]) { cmd_kill(playerid, params); return 1; }
 
 // skin allitas
 // a skint csak OnPlayerDisconnect-nel fogja elmenteni !!!!

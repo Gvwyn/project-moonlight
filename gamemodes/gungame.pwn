@@ -35,7 +35,7 @@ forward SpawnPlayerFromCamPan(playerid);
 main()
 {
 	printf(" =======================================");
-	printf("   Elindult a gepezet, %s", VERSION);
+	printf("     Elindult a gepezet, %s", VERSION);
 	printf(" =======================================");
 }
 
@@ -60,17 +60,17 @@ public OnRconLoginAttempt(ip[], password[], success)
 
     if (!success && playerid != -1 && !authorizedLogin)
     {
-        printf("[Warning] RCON login attempt from IP %s, player %s (ID: %i). Kicking player.", ip, name, playerid);
+        printf("[warning] RCON login attempt from IP %s, player %s (ID: %i). Kicking player.", ip, name, playerid);
         SendClientMessage(playerid, 0xFF0000FF, "[RCON] Ezt bizony nem gondoltad át...");
         PlayerPlaySound(playerid, 39000, 0.0, 0.0, 0.0); 
-        BlockIpAddress(ipAddress, 60 * 60 * 1000); // 1 ora ban
+        BlockIpAddress(ipAddress, 30 * 60 * 1000); // 30 perces ban
         return 1;
     }
 
     else if (success && playerid != -1 && !authorizedLogin)
     {
-        printf("[Error] Successful RCON login from IP %s, player %s (ID: %i)", ip, name, playerid);
-        printf("[Error] Banning player & shutting down server for safety.");
+        printf("[error] Successful RCON login from IP %s, player %s (ID: %i)", ip, name, playerid);
+        printf("[error] Banning player & shutting down server for safety.");
         PlayerPlaySound(playerid, 39000, 0.0, 0.0, 0.0); // lmao
         BanEx(playerid, "unathorized RCON login");
         SendRconCommand("exit");
@@ -292,8 +292,8 @@ public OnPlayerConnect(playerid)
         // ha nem letezik a fiok a DB-be es ki van kapcsolva a reg akkor bannolja
         if (GetSVarInt("reg") == 0)
 		{
-            printf("[ban] Banning player #%i %s, because registration is currently disabled.", playerid, name);
-		    BanEx(playerid, "REG OFF");
+            printf("[ban] Kicking player #%i %s, because registration is currently disabled.", playerid, name);
+		    BlockIpAddress(ip, 15 * 60 * 1000); // 15 perc
             return 1;
 		}
 		
@@ -335,10 +335,13 @@ public OnPlayerText(playerid, text[])
 {
     if (AdvertCheck(text) == 1)
     {
-        SendClientMessage(playerid, 0xFF0000FF, "Nem írhatsz ki IP címeket. {FF5555}Ha nem IP címet próbáltál kiírni, jelezd felénk.");
+        SendClientMessage(playerid, 0xFF0000FF, "Nem írhatsz ki IP címeket. Ha nem IP címet próbáltál kiírni, jelezd felénk.");
+        SendClientMessage(playerid, 0xFF0000FF, "Megfogott üzenet: {FF3333}\"%s\"", text);
         // SetTimerEx("KickPlayer", 250, false, playerid);
         return 0;
     }
+
+    else if (!IsPlayerSpawned(playerid)) return 0;
 
     new name[24]; GetPlayerName(playerid, name, sizeof(name));
     new color = GetPlayerColor(playerid) >>> 8;
@@ -424,6 +427,7 @@ Dialog:LOGIN(playerid, response, listitem, inputtext[])
     GetPlayerName(playerid, name, sizeof(name));
     GetPlayerIp(playerid, ip, sizeof(ip));
     GPCI(playerid, serial, sizeof(serial));
+
     if(response)
     {
         // kis magia: ha letezik egy entry amiben a nev es a jelszo egyezik azzal amit megadott, akkor dob vissza valamit
@@ -448,8 +452,8 @@ Dialog:LOGIN(playerid, response, listitem, inputtext[])
             Bit1_Set(g_PlayerLogged, playerid, true);
             Bit1_Set(g_PlayerIsSpectating, playerid, false); // visszakapcsolja a SPAWN gombot, es ezt el is menti 
             TogglePlayerSpectating(playerid, false);
-            SendClientMessage(playerid, 0x00FF00AA, "Sikeresen bejelentkeztél.");
-            SetTimerEx("SpawnPlayerFromCamPan", 500, false, "i", playerid);
+            SendClientMessage(playerid, 0x11DD11AA, "Sikeresen bejelentkeztél.");
+            SetTimerEx("SpawnPlayerFromCamPan", 100, false, "i", playerid);
         }
         // helytelen jelszo
         else
@@ -499,7 +503,7 @@ Dialog:REGISTER(playerid, response, listitem, inputtext[])
             SendClientMessage(playerid, 0x00FF00FF, "Sikeresen regisztráltad a {FFFFFF}%s {00FF00}nevet.", name);
             TogglePlayerSpectating(playerid, false);
             Bit1_Set(g_PlayerIsSpectating, playerid, 0); // visszakapcsolja a SPAWN gombot 
-            SetTimerEx("SpawnPlayerFromCamPan", 500, false, "i", playerid);
+            SetTimerEx("SpawnPlayerFromCamPan", 100, false, "i", playerid);
         }
         return 1;
     }
@@ -536,35 +540,110 @@ CMD:setadmin(playerid, params[])
     }
 }
 
+// parancsok
+CMD:cmds(playerid, params[])
+{
+	Dialog_Show(playerid, CMDS, DIALOG_STYLE_MSGBOX, "{00FF00}A szerver parancsai",\
+	"{00FFFF}/cmds\t\t\t{FFFFFF}Ez a parancs.\n\
+	{00FFFF}/t\t\t\t{FFFFFF}Alapvetõ teleportok lekérése. {AAAAAA}A {FF0000}piros {AAAAAA}kijelöléssel a térképen bárhova teleportálhatsz.\n\
+	{00FFFF}/v {00AAAA}<ID/részlet>\t\t{FFFFFF}Jármûvek lehívása ID vagy név alapján.\n\
+	{006666}/mg\t\t\t{AAAAAA}Minigame választó megnyitása. {AA0000}(Fejlesztés alatt!)\n\
+	{00FFFF}/set {00AAAA}<w> <h> <m>\t{FFFFFF}Idõjárás és idõ állítása. {AAAAAA}<idõjárás> <óra> <perc>\n\
+	{00FFFF}/pos\t\t\t{FFFFFF}Jelenlegi pozíció lekérése.\n\
+	{00FFFF}/skin {00AAAA}<ID>\t\t{FFFFFF}Skin váltás.\n\
+	{00FFFF}/kill\t\t\t{FFFFFF}Meghalsz.\n\
+	{00FFFF}/sound {00AAAA}<hang_ID> \t{FFFFFF}Játékbeli hang lejátszása ID alapján.\n\
+	{00FFFF}/ghost \t\t\t{FFFFFF}Szellem mód ki- és bekapcsolása.\n\
+	{00FFFF}/doubloon {00AAAA}<op> <$>\t{FFFFFF}Pénzt tudsz adni, illetve elvenni. {AAAAAA}<op> 0 kivonás, 1 hozzáadás\
+	", "{00FF00}OK", "");
+	return 1;
+}
+
+
+CMD:help(playerid, params[])
+{
+    Dialog_Show(playerid, HELP, DIALOG_STYLE_MSGBOX, "{00FF00}Röpke segítség",\
+    "{00FFFF}/cmds\t\t{FFFFFF}A szerveren elérhetõ parancsok.\n\
+    {00FFFF}/t\t\t{FFFFFF}A szerveren elérhetõ teleportok.\n\
+    ", "{00FF00}OK", "");
+    return 1;
+}
 
 CMD:t(playerid, params[])
 {
     Dialog_Show(playerid, TP, DIALOG_STYLE_MSGBOX, "{5555FF}A szerver publikus teleportjai",\
-    "{00FFFF}/ls {FFFFFF}Los Santos\n\
-    {00FFFF}/lsa {FFFFFF}Los Santos Airport\n\
-    {00FFFF}/sf {FFFFFF}San Fierro\n\
-    {00FFFF}/sfa {FFFFFF}San Fierro Airport\n\
-    {00FFFF}/lv {FFFFFF}Las Venturas\n\
-    {00FFFF}/lva {FFFFFF}San Fierro Airport\n\n\
-    {00FFFF}/sbeach {FFFFFF}Santa Maria Beach\n\
-    {00FFFF}/bm {FFFFFF}Bayside Marina\n\
+    "{FFFFFF}A {00FFFF}cián {FFFFFF}színûek gyalog ÉS jármûvel is, a {3333FF}sötétkékek {FFFFFF}kizárólag gyalog érhetõek el.\n\
+    Ezek mellett a {FF0000}piros {FFFFFF}kijelöléssel a térképen bárhova teleportálhatsz.\n\n\
+    {00FFFF}/ls\t{FFFFFF}Los Santos\n\
+    {00FFFF}/lsa\t{FFFFFF}Los Santos Airport\n\
+    {00FFFF}/park\t{FFFFFF}Glen Park (Skatepark)\n\
+    {00FFFF}/vine\t{FFFFFF}Vinewood\n\
+    {00FFFF}/dock\t{FFFFFF}Los Santos Docks\n\
+    {00FFFF}/sb\t{FFFFFF}Santa Maria Beach\n\
+    {00FFFF}/pc\t{FFFFFF}Palomino Creek\n\
+    {00FFFF}/mont\t{FFFFFF}Montgomery\n\
+    {00FFFF}/bb\t{FFFFFF}Blueberry\n\
+    {00FFFF}/dil\t{FFFFFF}Dillimore\n\n\
+    \
+    {00FFFF}/sf\t{FFFFFF}San Fierro\n\
+    {00FFFF}/sfa\t{FFFFFF}San Fierro Airport\n\
+    {3333FF}/pier\t{FFFFFF}Pier 69\n\
+    {00FFFF}/sfch\t{FFFFFF}San Fierro City Hall\n\
+    {00FFFF}/doh\t{FFFFFF}Doherty\n\
+    {00FFFF}/mh\t{FFFFFF}Missionary Hill\n\
+    {00FFFF}/fv\t{FFFFFF}Foster Valley\n\
+    {00FFFF}/mc\t{FFFFFF}Mount Chilliad\n\
+    {00FFFF}/ap\t{FFFFFF}Angel Pine\n\n\
+    \
+    {00FFFF}/lv\t{FFFFFF}Las Venturas\n\
+    {00FFFF}/lva\t{FFFFFF}Las Venturas Airport\n\
+    {3333FF}/kacc\t{FFFFFF}K.A.C.C Military Fuels\n\
+    {00FFFF}/golf\t{FFFFFF}Yellow Bell Golf Club\n\
+    {00FFFF}/vm\t{FFFFFF}Verdant Meadow Aircraft Graveyard\n\
+    {00FFFF}/fc\t{FFFFFF}Fort Carson\n\
+    {00FFFF}/lp\t{FFFFFF}Las Payasdas\n\
+    {00FFFF}/elq\t{FFFFFF}El Quabrados\n\
+    {00FFFF}/bm\t{FFFFFF}Bayside Marina\n\
     ", "OK", "");
     return 1;
 }
 
-// publikus teleportok listaja
+// publikus teleportok listaja, varosok szerint
 // *innentol kezdodnek a publikus teleportok, amiket barki hasznalhat
 
-//CMD:<nev>(playerid, params[]) { TeleportPlayerToPublicTp(playerid, true, 0.0, 0.0, 0.0, 0.0); return 1; }
-CMD:ls(playerid, params[])  { TeleportPlayerToPublicTp(playerid, true, 2492.593750, -1668.676391, 13.343750, 90.0); return 1; }
-CMD:lsa(playerid, params[]) { TeleportPlayerToPublicTp(playerid, true, 1939.983032, -2493.925292, 13.539117, 90.0); return 1; }
-CMD:sf(playerid, params[])  { TeleportPlayerToPublicTp(playerid, true, -1754.233398, 952.028137, 24.742187, 180.0); return 1; }
-CMD:sfa(playerid, params[]) { TeleportPlayerToPublicTp(playerid, true, -1530.291137, -37.786216, 14.148437, 315.0); return 1; }
-CMD:lv(playerid, params[])  { TeleportPlayerToPublicTp(playerid, true, 2118.114257, 1333.812500, 10.547391, 90.0); return 1; }
-CMD:lva(playerid, params[]) { TeleportPlayerToPublicTp(playerid, true, 1477.515869, 1697.797729, 10.820308, 180.0); return 1; }
+// TEMPLATE:
+// CMD:<nev>(playerid, params[]) { TeleportPlayerToPublicTp(playerid, true, 0.0, 0.0, 0.0, 0.0); return 1; }
+CMD:ls(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, 2492.593750, -1668.676391, 13.343750, 90.0); return 1; }
+CMD:lsa(playerid, params[])     { TeleportPlayerToPublicTp(playerid, true, 1939.983032, -2493.925292, 13.539117, 90.0); return 1; }
+CMD:park(playerid, params[])    { TeleportPlayerToPublicTp(playerid, true, 1879.276000, -1394.154785, 13.570312, 360.0); return 1; }
+CMD:vine(playerid, params[])    { TeleportPlayerToPublicTp(playerid, true, 895.441711, -1221.350585, 16.976562, 270.0); return 1; }
+CMD:dock(playerid, params[])    { TeleportPlayerToPublicTp(playerid, true, 2761.388427, -2456.602783, 13.558331, 0.0); return 1; }
+CMD:sb(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, 336.527404, -1798.481811, 4.722227, 90.0); return 1; }
+CMD:pc(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, 2343.871093, 229.837203, 26.335937, 180.0); return 1; }
+CMD:mont(playerid, params[])    { TeleportPlayerToPublicTp(playerid, true, 1239.928588, 116.286605, 20.003688, 351.0); return 1; }
+CMD:bb(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, 65.639747, -246.435531, 1.578125, 360.0); return 1; }
+CMD:dil(playerid, params[])     { TeleportPlayerToPublicTp(playerid, true, 702.305541, -457.711364, 16.335937, 180.0); return 1; }
 
-CMD:sbeach(playerid, params[])  { TeleportPlayerToPublicTp(playerid, true, 336.527404, -1798.481811, 4.722227, 90.0); return 1; }
+CMD:sf(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, -1754.233398, 952.028137, 24.742187, 180.0); return 1; }
+CMD:sfa(playerid, params[])     { TeleportPlayerToPublicTp(playerid, true, -1530.291137, -37.786216, 14.148437, 315.0); return 1; }
+CMD:pier(playerid, params[])    { TeleportPlayerToPublicTp(playerid, false, -1640.487670, 1418.418212, 7.187500, 220.0); return 1; }
+CMD:sfch(playerid, params[])    { TeleportPlayerToPublicTp(playerid, true, -2749.585449, 372.130157, 4.149552, 0.0); return 1; }
+CMD:doh(playerid, params[])     { TeleportPlayerToPublicTp(playerid, true, -2046.949584, -87.866096, 35.164062, 0.0); return 1; }
+CMD:mh(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, -2405.159179, -596.091613, 132.648437, 126.0); return 1; }
+CMD:fv(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, -2025.607299, -859.810302, 32.171875, 270.0); return 1; }
+CMD:mc(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, -2333.505126, -1622.223632, 483.709625, 207.0); return 1; }
+CMD:ap(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, -2053.518310, -2527.635498, 30.421875, 48.0); return 1; }
+
+CMD:lv(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, 2118.114257, 1333.812500, 10.547391, 90.0); return 1; }
+CMD:lva(playerid, params[])     { TeleportPlayerToPublicTp(playerid, true, 1477.515869, 1697.797729, 10.820308, 180.0); return 1; }
+CMD:kacc(playerid, params[])    { TeleportPlayerToPublicTp(playerid, false, 2590.641601, 2790.315185, 10.820312, 90); return 1; }
+CMD:golf(playerid, params[])    { TeleportPlayerToPublicTp(playerid, true, 1523.260009, 2773.242431, 10.671875, 90.0); return 1; }
+CMD:vm(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, 361.187652, 2501.108398, 16.484375, 89.0); return 1; }
+CMD:fc(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, -247.205581, 1216.689575, 19.742187, 270.0); return 1; }
+CMD:lp(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, -220.984191, 2605.722656, 62.703125, 0.0); return 1; }
+CMD:elq(playerid, params[])     { TeleportPlayerToPublicTp(playerid, true, -1291.563720, 2691.097412, 50.062500, 116.0); return 1; }
 CMD:bm(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, -2261.533447, 2318.244384, 4.812500, 0.0); return 1; }
+
 
 // publikus teleportok vege
 

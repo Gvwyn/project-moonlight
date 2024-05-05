@@ -2,7 +2,7 @@
 Egy fajl, amiben globalis valtozok vannak
 ilyenek pl a DIALOG-hoz tartozo ID-k
 */
-#define VERSION "build 28-sqlite"
+#define VERSION "build 28-rev"
 #define GAMEMODE "Bumburnyák"
 #pragma warning disable 203, 214
 

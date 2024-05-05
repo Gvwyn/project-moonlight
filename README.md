@@ -27,19 +27,21 @@
     - penzt kezelo parancsok mostmar mukodnek
     - spawnolassal kapcsolatos javitasok, amik lehet nem fognak mukodni rendesen
 
-- BUILD 28
+- BUILD 28-revision: atnevezve!
     - minigame menu letrehozva
         - elkezdtem a merleg minigamet, amit White ajanlott, innen is puszi
     - **easyDialog** include-t hasznalok mostmar, bolond dialog spoofing ellen
     - ora jobb fentre, HH:MM formatumban (meg lehet csinositani rajta)
-    - /v parancs mostmar letiltja a vonatokat (ezeket nem lehet igy spawnolni)
+    - /v parancs ~~mostmar letiltja a vonatokat~~ vonatokat IS le lehet kerni :)
     - mostmar nem rakja vissza 60 sec utan a jarmuveket oda, ahova lespawnoltuk
-    - anti-cheat kezdete: nem tudsz tobbe penzt addolni magadnak csalassal (ott a /doubloon dumbass)
+    - **anti-cheat** kezdete: nem tudsz tobbe penzt addolni magadnak csalassal
+        - a penzt csakis az adatbazisban van hivatalosan manipulalva, igy ha elteres van a jatekos baszott el valamit
     - /setadmin parancs, plusz egyeb admin parancsok -> javitva az admin szintek lekerese
     - /kill & /kys parancs
     - updated chat kiiras formatum
         - PLAYER (ID): \<TEXT\>
     - **publikus teleportok** (ls, lv, sf etc.) -> ezeket konnyu lesz boviteni
+        - letrehoztam jopar alap teleportot ~30 db
     - **anti-ip**-kiiras, 5 sorban Regex-nek koszonhetoen (gecisok idobe telt mukodesre birni...)
 
 > language support soon!
