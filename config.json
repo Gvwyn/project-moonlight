@@ -94,7 +94,8 @@
     "password": "faszgeci",
     "pawn": {
         "legacy_plugins": [
-            "pawnregex"
+            "pawnregex",
+            "streamer"
 		],
         "main_scripts": [
             "gungame 1"

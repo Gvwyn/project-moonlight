@@ -1,6 +1,6 @@
 /*
-Egy fajl, amiben globalis valtozok vannak
-ilyenek pl a DIALOG-hoz tartozo ID-k
+Egy fajl, amiben globalis valtozok, illetve funkciok vannak
+nagyresze olyan, ami tobb scriptbol is kell(het)
 */
 #define VERSION "build 28-rev"
 #define GAMEMODE "Bumburnyák"
@@ -41,6 +41,13 @@ stock DB_Escape(text[])
     }
     ret[sizeof (ret) - 1] = '\0';
     return ret;
+}
+
+// limit: 32 bit signed int lim
+// str[]: number to check as a string
+stock IsNaN(number)
+{
+    return 1;
 }
 
 /*

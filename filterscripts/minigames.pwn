@@ -1,6 +1,7 @@
 #define FILTERSCRIPT
 #include <open.mp>
 #include <global_vars>
+#include <streamer>
 #include <easyDialog>
 #include <izcmd>
 #include <sscanf2>

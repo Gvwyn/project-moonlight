@@ -1,7 +1,8 @@
 #include <open.mp>
 #include <global_vars> // 1 fajl, amiben global valtozok vannak
-#include <Pawn.Regex>
+#include <streamer>
 #include <easyDialog>
+#include <Pawn.Regex>
 #include <rBits>
 #include <izcmd>
 #include <sscanf2>
@@ -540,6 +541,18 @@ CMD:setadmin(playerid, params[])
     }
 }
 
+CMD:setpos(playerid, params[])
+{
+    if (4 == Bit8_Get(g_AdminLevel, playerid) || IsPlayerAdmin(playerid))
+    {
+        new Float:x, Float:y, Float:z, int;
+        if (!sscanf(params, "fffi", x, y, z, int))
+        {
+
+        }
+    }
+}
+
 // parancsok
 CMD:cmds(playerid, params[])
 {
@@ -574,36 +587,23 @@ CMD:t(playerid, params[])
     Dialog_Show(playerid, TP, DIALOG_STYLE_MSGBOX, "{5555FF}A szerver publikus teleportjai",\
     "{FFFFFF}A {00FFFF}cián {FFFFFF}színûek gyalog ÉS jármûvel is, a {3333FF}sötétkékek {FFFFFF}kizárólag gyalog érhetõek el.\n\
     Ezek mellett a {FF0000}piros {FFFFFF}kijelöléssel a térképen bárhova teleportálhatsz.\n\n\
-    {00FFFF}/ls\t{FFFFFF}Los Santos\n\
-    {00FFFF}/lsa\t{FFFFFF}Los Santos Airport\n\
-    {00FFFF}/park\t{FFFFFF}Glen Park (Skatepark)\n\
-    {00FFFF}/vine\t{FFFFFF}Vinewood\n\
-    {00FFFF}/dock\t{FFFFFF}Los Santos Docks\n\
-    {00FFFF}/sb\t{FFFFFF}Santa Maria Beach\n\
-    {00FFFF}/pc\t{FFFFFF}Palomino Creek\n\
-    {00FFFF}/mont\t{FFFFFF}Montgomery\n\
-    {00FFFF}/bb\t{FFFFFF}Blueberry\n\
-    {00FFFF}/dil\t{FFFFFF}Dillimore\n\n\
+    {00FFFF}/ls\t{FFFFFF}Los Santos\t\t\t{00FFFF}/sb\t{FFFFFF}Santa Maria Beach\n\
+    {00FFFF}/lsa\t{FFFFFF}Los Santos Airport\t\t{00FFFF}/pc\t{FFFFFF}Palomino Creek\n\
+    {00FFFF}/park\t{FFFFFF}Glen Park (Skatepark)\t\t{00FFFF}/mont\t{FFFFFF}Montgomery\n\
+    {00FFFF}/vine\t{FFFFFF}Vinewood\t\t\t{00FFFF}/bb\t{FFFFFF}Blueberry\n\
+    {00FFFF}/dock\t{FFFFFF}Los Santos Docks\t\t{00FFFF}/dil\t{FFFFFF}Dillimore\n\n\
     \
-    {00FFFF}/sf\t{FFFFFF}San Fierro\n\
-    {00FFFF}/sfa\t{FFFFFF}San Fierro Airport\n\
-    {3333FF}/pier\t{FFFFFF}Pier 69\n\
-    {00FFFF}/sfch\t{FFFFFF}San Fierro City Hall\n\
-    {00FFFF}/doh\t{FFFFFF}Doherty\n\
-    {00FFFF}/mh\t{FFFFFF}Missionary Hill\n\
-    {00FFFF}/fv\t{FFFFFF}Foster Valley\n\
-    {00FFFF}/mc\t{FFFFFF}Mount Chilliad\n\
-    {00FFFF}/ap\t{FFFFFF}Angel Pine\n\n\
+    {00FFFF}/sf\t{FFFFFF}San Fierro\t\t\t{00FFFF}/mh\t{FFFFFF}Missionary Hill\n\
+    {00FFFF}/sfa\t{FFFFFF}San Fierro Airport\t\t{00FFFF}/fv\t{FFFFFF}Foster Valley\n\
+    {3333FF}/pier\t{FFFFFF}Pier 69\t\t\t\t{00FFFF}/mc\t{FFFFFF}Mount Chilliad\n\
+    {00FFFF}/sfch\t{FFFFFF}San Fierro City Hall\t\t{00FFFF}/ap\t{FFFFFF}Angel Pine\n\
+    {00FFFF}/doh\t{FFFFFF}Doherty\n\n\
     \
-    {00FFFF}/lv\t{FFFFFF}Las Venturas\n\
-    {00FFFF}/lva\t{FFFFFF}Las Venturas Airport\n\
-    {3333FF}/kacc\t{FFFFFF}K.A.C.C Military Fuels\n\
-    {00FFFF}/golf\t{FFFFFF}Yellow Bell Golf Club\n\
-    {00FFFF}/vm\t{FFFFFF}Verdant Meadow Aircraft Graveyard\n\
-    {00FFFF}/fc\t{FFFFFF}Fort Carson\n\
-    {00FFFF}/lp\t{FFFFFF}Las Payasdas\n\
-    {00FFFF}/elq\t{FFFFFF}El Quabrados\n\
-    {00FFFF}/bm\t{FFFFFF}Bayside Marina\n\
+    {00FFFF}/lv\t{FFFFFF}Las Venturas\t\t\t{00FFFF}/fc\t{FFFFFF}Fort Carson\n\
+    {00FFFF}/lva\t{FFFFFF}Las Venturas Airport\t\t{00FFFF}/lp\t{FFFFFF}Las Payasdas\n\
+    {3333FF}/kacc\t{FFFFFF}K.A.C.C Military Fuels\t\t{00FFFF}/elq\t{FFFFFF}El Quabrados\n\
+    {00FFFF}/golf\t{FFFFFF}Yellow Bell Golf Club\t\t{00FFFF}/bm\t{FFFFFF}Bayside Marina\n\
+    {00FFFF}/vm\t{FFFFFF}Verdant Meadow Airfield\n\
     ", "OK", "");
     return 1;
 }
@@ -643,7 +643,6 @@ CMD:fc(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, -247.
 CMD:lp(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, -220.984191, 2605.722656, 62.703125, 0.0); return 1; }
 CMD:elq(playerid, params[])     { TeleportPlayerToPublicTp(playerid, true, -1291.563720, 2691.097412, 50.062500, 116.0); return 1; }
 CMD:bm(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, -2261.533447, 2318.244384, 4.812500, 0.0); return 1; }
-
 
 // publikus teleportok vege
 

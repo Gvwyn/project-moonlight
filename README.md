@@ -3,12 +3,12 @@
 ### jelenlegi includeok, pluginok stb...
 
 - **[open.mp 1.2.0.2670](https://github.com/openmultiplayer)**  
-- **[iZCMD](https://github.com/YashasSamaga/I-ZCMD)**
-- **[easyDialog](https://github.com/Awsomedude/easyDialog)**
-- **[sscanf](https://github.com/Y-Less/sscanf/)**
-- **[rBits](https://github.com/Mergevos/pawn-rbits)**
-- **[Pawn.Regex](https://github.com/katursis/Pawn.Regex)**
-
+- **[iZCMD 0.2.3.0](https://github.com/YashasSamaga/I-ZCMD)**
+- **[easyDialog 2.0](https://github.com/Awsomedude/easyDialog)**
+- **[sscanf 2.13.8](https://github.com/Y-Less/sscanf/)**
+- **[rBits 1.0.0](https://github.com/Mergevos/pawn-rbits)**
+- **[Pawn.Regex 1.2.3-omp](https://github.com/katursis/Pawn.Regex)**
+- **[streamer 2.9.6](https://github.com/samp-incognito/samp-streamer-plugin)** !!
 
 ## changelog
 
@@ -27,10 +27,14 @@
     - penzt kezelo parancsok mostmar mukodnek
     - spawnolassal kapcsolatos javitasok, amik lehet nem fognak mukodni rendesen
 
-- BUILD 28-revision: atnevezve!
+- BUILD 28-revision: *atnevezve!*
     - minigame menu letrehozva
         - elkezdtem a merleg minigamet, amit White ajanlott, innen is puszi
-    - **easyDialog** include-t hasznalok mostmar, bolond dialog spoofing ellen
+    - **includes**:
+        - **easyDialog**: konnyebb dialog kezeles + anti spoofing
+        - **streamer**: limitek basszak meg
+        - ~~**mathutil:** nehany egyeb matek cucc ami jol jon~~ akkor hat nem
+    - sajat IsNaN funkcio mert mathutil nem mukodott
     - ora jobb fentre, HH:MM formatumban (meg lehet csinositani rajta)
     - /v parancs ~~mostmar letiltja a vonatokat~~ vonatokat IS le lehet kerni :)
     - mostmar nem rakja vissza 60 sec utan a jarmuveket oda, ahova lespawnoltuk
@@ -44,4 +48,12 @@
         - letrehoztam jopar alap teleportot ~30 db
     - **anti-ip**-kiiras, 5 sorban Regex-nek koszonhetoen (gecisok idobe telt mukodesre birni...)
 
-> language support soon!
+
+> language support soon!  
+
+> - **KONCEPCIO:** 
+>   - jatekos bannolasa helyett shadowban, amivel
+>       - minden olyan funkcio, ami a csalassal befolyasolhato (rablas, penzszerzes, versenyek) letiltasra kerulnek a jatekosnak
+>       - nem tud baszogatni embereket
+>   - igy ha repked peldaul, csak nem tudja kihasznalni, de repkedhet
+>   - persze extrem esetekben bannolhato marad a szemely (pl olyan csalasoknak, amik laggoltatnak)
