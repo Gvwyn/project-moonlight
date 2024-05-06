@@ -1,6 +1,7 @@
 #include <open.mp>
-#include <global_vars> // 1 fajl, amiben global valtozok vannak
+#include <global_vars>
 #include <streamer>
+#include <mapandreas>
 #include <easyDialog>
 #include <Pawn.Regex>
 #include <rBits>
@@ -17,7 +18,7 @@ new
     DB: Database
 ;
 
-// X.X.X.X.X:PORT VAGY DOMAIN NEVEKET MEGFOGJA
+// X.X.X.X.X:PORT & SUSPICIOUS DOMAIN NAMES
 stock AdvertCheck(text[])
 {
     static Regex:regex;
@@ -28,7 +29,7 @@ stock AdvertCheck(text[])
 forward UpdateClock();
 forward KickPlayer(playerid);
 forward BanPlayer(playerid, reason[]);
-forward SetPlayerSkinFromFs(playerid, skinid); // Ez frissiti a g_PlayerSkin[playerid]-t
+forward SetPlayerSkinFromFs(playerid, skinid); // updates the g_PlayerSkin value, called from filterscripts
 forward TeleportPlayerToPublicTp(playerid, areVehiclesAllowed, Float:x, Float:y, Float:z, Float:angle);
 forward CameraPan(playerid);
 forward SpawnPlayerFromCamPan(playerid);
@@ -36,7 +37,7 @@ forward SpawnPlayerFromCamPan(playerid);
 main()
 {
 	printf(" =======================================");
-	printf("     Elindult a gepezet, %s", VERSION);
+	printf("  The machine has started, %s", VERSION);
 	printf(" =======================================");
 }
 
@@ -62,9 +63,9 @@ public OnRconLoginAttempt(ip[], password[], success)
     if (!success && playerid != -1 && !authorizedLogin)
     {
         printf("[warning] RCON login attempt from IP %s, player %s (ID: %i). Kicking player.", ip, name, playerid);
-        SendClientMessage(playerid, 0xFF0000FF, "[RCON] Ezt bizony nem gondoltad át...");
+        SendClientMessage(playerid, 0xFF0000FF, "[RCON] You didn't think this through, now did you?");
         PlayerPlaySound(playerid, 39000, 0.0, 0.0, 0.0); 
-        BlockIpAddress(ipAddress, 30 * 60 * 1000); // 30 perces ban
+        BlockIpAddress(ipAddress, 5 * 60 * 1000); // 5 perces ban
         return 1;
     }
 
@@ -83,8 +84,8 @@ public OnRconLoginAttempt(ip[], password[], success)
 public OnGameModeInit()
 {
     Database = DB_Open("Server.db");
-
-    // biztos nem fogom mindig updatelni de eddig jo ha elbaszok valamit es resetelni kell
+    MapAndreas_Init(MAP_ANDREAS_MODE_FULL, "scriptfiles/SAFull.hmap");
+    /*
     DB_ExecuteQuery(Database, "CREATE TABLE IF NOT EXISTS `Players` (\
     `UID` INTEGER PRIMARY KEY AUTOINCREMENT,\
     `Player` VARCHAR(24),\
@@ -95,14 +96,15 @@ public OnGameModeInit()
     `Skin_ID` INT,\
     `Admin` INT\
 	);");
+    */
 
 	if(Database)
 	{
-	    print("[SQLite] Adatbazis sikeresen beolvasva.");
+	    print("[SQLite] Database loaded.");
 	}
     else
     {
-        print("[SQLite] Sikertelen adatbazis beolvasas, a szerver leall. :(");
+        print("[SQLite] Failed to load database, shutting down server.");
         exit;
     }
 
@@ -147,7 +149,7 @@ public OnPlayerSpawn(playerid)
     TextDrawShowForPlayer(playerid, Clock);
 	if(Bit1_Get(g_PlayerLogged, playerid) == 0)
 	{
-        printf("[kick] Kickelve %s (ID: %i), mert nem volt belepve es lespawnolt.", name, playerid);
+        printf("[kick] Kicking %s (ID: %i), because they spawned without logging in.", name, playerid);
 	    Kick(playerid);
  	}
 }
@@ -183,7 +185,7 @@ public TeleportPlayerToPublicTp(playerid, areVehiclesAllowed, Float:x, Float:y, 
 {
     if (GetPlayerInterior(playerid) != 0) 
     {
-        SendClientMessage(playerid, 0xFF0000FF, "Nem teleportálhatsz épületbelsõkbõl.");
+        SendClientMessage(playerid, 0xFF0000FF, "You're not allowed to teleport from interiors.");
         return 1;
     }
 
@@ -193,7 +195,7 @@ public TeleportPlayerToPublicTp(playerid, areVehiclesAllowed, Float:x, Float:y, 
     {
         if (!areVehiclesAllowed)
         {
-            SendClientMessage(playerid, 0xFF0000FF, "Ide nem teleportálhatsz jármûvel.");
+            SendClientMessage(playerid, 0xFF0000FF, "You're not allowed to teleport here with a vehicle.");
             return 1;
         }
         new vehicleid = GetPlayerVehicleID(playerid);
@@ -253,8 +255,8 @@ public OnPlayerConnect(playerid)
     TogglePlayerSpectating(playerid, true);
     new randomscene = random(CameraScenes);
     SetPVarInt(playerid, "camera", randomscene);
-    Bit1_Set(g_PlayerIsSpectating, playerid, 1); // kikapcsolja a SPAWN gombot
-    SetTimerEx("CameraPan", 250, false, "i", playerid); // TogglePlayerSpectating utan AZONNAL nem lehet kamerat eltenni mashova
+    Bit1_Set(g_PlayerIsSpectating, playerid, 1); // disables the SPAWN button
+    SetTimerEx("CameraPan", 250, false, "i", playerid);
     SetPlayerVirtualWorld(playerid, 255);
     SetPlayerColor(playerid, (random(0xFFFFFF) << 8) + 0xFF);
 
@@ -269,12 +271,13 @@ public OnPlayerConnect(playerid)
     Result = DB_ExecuteQuery(Database, "SELECT `Player`, `GPCI` FROM `Players` WHERE `Player` = '%s' COLLATE NOCASE", DB_Escape(name));
     
     GetPlayerIp(playerid, ip, sizeof(ip));
-    GPCI(playerid, serial, sizeof(serial)); // jelenlegi GPCI
+    GPCI(playerid, serial, sizeof(serial)); // player's current GPCI
     
     Bit1_Set(g_PlayerLogged, playerid, false);
 
     SendDeathMessage(playerid, INVALID_PLAYER_ID, 200);
-	SendClientMessageToAll(-1, "{00FFFF}%s {FFFFFF}belépett a szerverre.", name);
+    SendClientMessage(playerid, 0x00FF00AA, "Welcome to the server, %s!", name);
+	SendClientMessageToAll(0x00FFFFFF, "%s {FFFFFF}joined the server.", name);
     if(DB_GetRowCount(Result))
     {
         new DB_serial[41]; DB_GetFieldStringByName(Result, "GPCI", DB_serial); //  GPCI a DB-bol
@@ -286,11 +289,11 @@ public OnPlayerConnect(playerid)
 	 	    return 1;
  		}
  		SetPVarInt(playerid, "login", 0);
-        Dialog_Show(playerid, LOGIN, DIALOG_STYLE_PASSWORD, "{00FF00}Beléptetõ rendszer {FFFFFF}:: {00FF00}Bejelentkezés", "{FFFFFF}Üdv a szerveren, {00FFFF}%s{FFFFFF}!\n\nA bejelentkezéshez add meg a jelszavad:", "{00FF00}Belépés", "{FF0000}Kick", DB_Escape(name));
+        Dialog_Show(playerid, LOGIN, DIALOG_STYLE_PASSWORD, "{00FF00}Login", "{FFFFFF}Your name is registered.\n\nEnter your password below:", "{00FF00}Login", "{FF0000}Kick");
     }
     else
     {
-        // ha nem letezik a fiok a DB-be es ki van kapcsolva a reg akkor bannolja
+        // if reg is off, block the player's ip for 15 minutes
         if (GetSVarInt("reg") == 0)
 		{
             printf("[ban] Kicking player #%i %s, because registration is currently disabled.", playerid, name);
@@ -298,7 +301,7 @@ public OnPlayerConnect(playerid)
             return 1;
 		}
 		
-        Dialog_Show(playerid, REGISTER, DIALOG_STYLE_PASSWORD, "{00FF00}Beléptetõ rendszer {FFFFFF}:: {FF0000}Regisztráció", "{FFFFFF}Üdv a szerveren, {00FFFF}%s{FFFFFF}!\n\nA neved jelenleg nincs regisztrálva.\nA regisztrációhoz adj meg egy jelszót:", "{00FF00}Reg.", "{FF0000}Kick", DB_Escape(name));
+        Dialog_Show(playerid, REGISTER, DIALOG_STYLE_PASSWORD, "{00FF00}Registration", "{FFFFFF}Your name is {FF0000}not {FFFFFF}registered.\n\nEnter a password below to register an account:", "{00FF00}Register", "{FF0000}Kick");
     }
     DB_FreeResultSet(Result);
     return 1;
@@ -310,18 +313,16 @@ public OnPlayerDisconnect(playerid, reason)
     GetPlayerName(playerid, playerName, MAX_PLAYER_NAME);
     new reasons[5][] =
     {
-        "kifagyott/crashelt",
-        "kilépett",
-        "ki lett rúgva",
-        "eltûnt",
-        "automatikusan ki lett rúgva"
+        "crashed",
+        "left the server",
+        "has been kicked",
+        "disappeared into thin air",
+        "has been automatically kicked."
     };
     SendDeathMessage(playerid, INVALID_PLAYER_ID, 200);
     if (reason != 2) SendClientMessageToAll(-1, "{AAAAAA}%s {DDDDDD}%s.", playerName, reasons[reason]);
 
-    // ez nem feltetlen a legokosabb dontes, viszont server load szempontjabol szerintem jobb mintha minden skinvaltas utan mentene
-    // eddig nem sikerult nem elmenteni a skinemet
-    // docs szerint open.mp alatt az OnPlayerDisconnect alatt is elerhetoek a jatekos cuccai, szoval ezzel baj se lehet (remelem)
+    // player's skin choice is saved when the player leaves the server
     DB_ExecuteQuery(Database, "UPDATE `Players` SET `Skin_ID` = %i WHERE `Player` = '%s'", GetPlayerSkin(playerid), playerName);
 
     Bit1_Set(g_PlayerLogged, playerid, false);
@@ -336,8 +337,8 @@ public OnPlayerText(playerid, text[])
 {
     if (AdvertCheck(text) == 1)
     {
-        SendClientMessage(playerid, 0xFF0000FF, "Nem írhatsz ki IP címeket. Ha nem IP címet próbáltál kiírni, jelezd felénk.");
-        SendClientMessage(playerid, 0xFF0000FF, "Megfogott üzenet: {FF3333}\"%s\"", text);
+        SendClientMessage(playerid, 0xFF0000FF, "You're not allowed to type IP addresses on the public chat.");
+        SendClientMessage(playerid, 0xFF0000FF, "Caught message: {FF3333}\"%s\"", text);
         // SetTimerEx("KickPlayer", 250, false, playerid);
         return 0;
     }
@@ -369,9 +370,16 @@ public OnPlayerTakeDamage(playerid, issuerid, Float:amount, WEAPON:weaponid, bod
 
 public OnPlayerClickMap(playerid, Float:fX, Float:fY, Float:fZ)
 {
+    new Float:pZ;
     if (GetPlayerInterior(playerid) != 0)
     {
-        SendClientMessage(playerid, 0xFF0000FF, "Nem teleportálhatsz épületbelsõkbõl.");
+        SendClientMessage(playerid, 0xFF0000FF, "You're not allowed to teleport from interiors.");
+        return 1;
+    }
+
+    if (!MapAndreas_FindAverageZ(fX, fY, pZ))
+    {
+        SendClientMessage(playerid, 0xFF0000FF, "Teleport failed.");
         return 1;
     }
 
@@ -379,12 +387,13 @@ public OnPlayerClickMap(playerid, Float:fX, Float:fY, Float:fZ)
 	if(IsPlayerInAnyVehicle(playerid) && GetVehicleDriver(GetPlayerVehicleID(playerid)) == playerid)
     {
         new vehicleid = GetPlayerVehicleID(playerid);
-        SetVehiclePos(vehicleid, fX, fY, fZ);
+        SetVehiclePos(vehicleid, fX, fY, pZ);
     }
 	else
 	{
-    	SetPlayerPosFindZ(playerid, fX, fY, fZ);
+    	SetPlayerPos(playerid, fX, fY, pZ);
 	}
+    SendClientMessage(playerid, 0x00FF00FF, "Teleported to %f, %f, %f.", fX, fY, pZ);
     return 1;
 }
 
@@ -404,13 +413,13 @@ public OnPlayerCommandReceived(playerid,cmdtext[])
 {
     if(Bit1_Get(g_PlayerLogged, playerid) == 0)
     {
-        SendClientMessage(playerid, 0xFF0000FF, "Nem használhatsz parancsokat addig, amíg nem jelentkezel be.");
+        SendClientMessage(playerid, 0xFF0000FF, "You can't use commands until you log in.");
         return 0;
     }
 
     else if (!IsPlayerSpawned(playerid) || Bit1_Get(g_PlayerIsSpectating, playerid) == 1)
     {
-        SendClientMessage(playerid, 0xFF0000FF, "Nem használhatsz parancsokat addig, amíg nem spawnolsz le.");
+        SendClientMessage(playerid, 0xFF0000FF, "You can't use commands until you spawn.");
         return 0;
     }
 	return 1;
@@ -431,7 +440,6 @@ Dialog:LOGIN(playerid, response, listitem, inputtext[])
 
     if(response)
     {
-        // kis magia: ha letezik egy entry amiben a nev es a jelszo egyezik azzal amit megadott, akkor dob vissza valamit
         Result = DB_ExecuteQuery(Database, "SELECT `Player`, `Password`, `Score`, `Admin`, `Skin_ID`, \
         printf('%%d', CASE \
         WHEN `Cash` < -999999999 THEN -999999999 \
@@ -453,7 +461,7 @@ Dialog:LOGIN(playerid, response, listitem, inputtext[])
             Bit1_Set(g_PlayerLogged, playerid, true);
             Bit1_Set(g_PlayerIsSpectating, playerid, false); // visszakapcsolja a SPAWN gombot, es ezt el is menti 
             TogglePlayerSpectating(playerid, false);
-            SendClientMessage(playerid, 0x11DD11AA, "Sikeresen bejelentkeztél.");
+            SendClientMessage(playerid, 0x11DD11AA, "You successfully logged in.");
             SetTimerEx("SpawnPlayerFromCamPan", 100, false, "i", playerid);
         }
         // helytelen jelszo
@@ -466,7 +474,7 @@ Dialog:LOGIN(playerid, response, listitem, inputtext[])
                 BlockIpAddress(ip, 5 * 60 * 1000);
                 return 1;
             }
-            Dialog_Show(playerid, LOGIN, DIALOG_STYLE_PASSWORD, "{00FF00}Beléptetõ rendszer {FFFFFF}:: {00FF00}Bejelentkezés", "{FFFFFF}Üdv a szerveren, {00FFFF}%s{FFFFFF}!\n\n{FF0000}Helytelen jelszót adtál meg, próbáld újra. {FFFFFF}({FF0000}%i{FFFFFF}/{FF0000}3{FFFFFF})", "{00FF00}Belépés", "{FF0000}Kick", name, GetPVarInt(playerid, "logins"));
+            Dialog_Show(playerid, LOGIN, DIALOG_STYLE_PASSWORD, "{00FF00}Login", "{FF0000}The password you entered is incorrect, try again. {FFFFFF}({FF0000}%i{FFFFFF}/{FF0000}3{FFFFFF})", "{00FF00}Login", "{FF0000}Kick", GetPVarInt(playerid, "logins"));
         }
         DB_FreeResultSet(Result);
     }
@@ -493,7 +501,7 @@ Dialog:REGISTER(playerid, response, listitem, inputtext[])
     {
         if(strlen(inputtext) > 64 || strlen(inputtext) < 4 || strfind(inputtext, "  ") != -1 || strfind(inputtext, "%%") != -1)
         {
-            Dialog_Show(playerid, REGISTER, DIALOG_STYLE_PASSWORD, "{00FF00}Beléptetõ rendszer {FFFFFF}:: {FF0000}Regisztráció", "{FFFFFF}Üdv a szerveren, {00FFFF}%s{FFFFFF}!\n\nA neved jelenleg {00FF00}nincs {FFFFFF}regisztrálva.\n\n{FF0000}A jelszónak {FFFFFF}4-64 {FF0000}karakter között kell lennie.\n{FFFFFF}A regisztrációhoz adj meg egy érvényes jelszót:", "{00FF00}Reg.", "{FF0000}Kick", name);
+            Dialog_Show(playerid, REGISTER, DIALOG_STYLE_PASSWORD, "{00FF00}Registration", "{FFFFFF}Your name is currently {FF0000}not {FFFFFF}registered.", "{00FF00}Register", "{FF0000}Kick", name);
         }
         else
         {
@@ -501,7 +509,7 @@ Dialog:REGISTER(playerid, response, listitem, inputtext[])
             Bit1_Set(g_PlayerLogged, playerid, true); 
             GivePlayerMoney(playerid, 2500);
             SetPlayerScore(playerid, 0);
-            SendClientMessage(playerid, 0x00FF00FF, "Sikeresen regisztráltad a {FFFFFF}%s {00FF00}nevet.", name);
+            SendClientMessage(playerid, 0x00FF00FF, "You've successfully registered the name {FFFFFF}%s", name);
             TogglePlayerSpectating(playerid, false);
             Bit1_Set(g_PlayerIsSpectating, playerid, 0); // visszakapcsolja a SPAWN gombot 
             SetTimerEx("SpawnPlayerFromCamPan", 100, false, "i", playerid);
@@ -530,13 +538,13 @@ CMD:setadmin(playerid, params[])
         }
         else
         {
-            SendClientMessage(playerid, 0xFF0000AA, "/setadmin <kit> <szint>");
+            SendClientMessage(playerid, 0xFF0000AA, "/setadmin <who> <level>");
             return 1;
         }
     }
     else
     {
-        SendClientMessage(playerid, 0xFF0000AA, "Ehhez nincs jogod.");
+        SendClientMessage(playerid, 0xFF0000AA, "Missing permission(s).");
         return 1;
     }
 }
@@ -554,20 +562,18 @@ CMD:setpos(playerid, params[])
 }
 
 // parancsok
-CMD:cmds(playerid, params[])
+CMD:c(playerid, params[])
 {
-	Dialog_Show(playerid, CMDS, DIALOG_STYLE_MSGBOX, "{00FF00}A szerver parancsai",\
-	"{00FFFF}/cmds\t\t\t{FFFFFF}Ez a parancs.\n\
-	{00FFFF}/t\t\t\t{FFFFFF}Alapvetõ teleportok lekérése. {AAAAAA}A {FF0000}piros {AAAAAA}kijelöléssel a térképen bárhova teleportálhatsz.\n\
-	{00FFFF}/v {00AAAA}<ID/részlet>\t\t{FFFFFF}Jármûvek lehívása ID vagy név alapján.\n\
-	{006666}/mg\t\t\t{AAAAAA}Minigame választó megnyitása. {AA0000}(Fejlesztés alatt!)\n\
-	{00FFFF}/set {00AAAA}<w> <h> <m>\t{FFFFFF}Idõjárás és idõ állítása. {AAAAAA}<idõjárás> <óra> <perc>\n\
-	{00FFFF}/pos\t\t\t{FFFFFF}Jelenlegi pozíció lekérése.\n\
-	{00FFFF}/skin {00AAAA}<ID>\t\t{FFFFFF}Skin váltás.\n\
-	{00FFFF}/kill\t\t\t{FFFFFF}Meghalsz.\n\
-	{00FFFF}/sound {00AAAA}<hang_ID> \t{FFFFFF}Játékbeli hang lejátszása ID alapján.\n\
-	{00FFFF}/ghost \t\t\t{FFFFFF}Szellem mód ki- és bekapcsolása.\n\
-	{00FFFF}/doubloon {00AAAA}<op> <$>\t{FFFFFF}Pénzt tudsz adni, illetve elvenni. {AAAAAA}<op> 0 kivonás, 1 hozzáadás\
+	Dialog_Show(playerid, CMDS, DIALOG_STYLE_MSGBOX, "{00FF00}Commands",\
+	"{00FFFF}/t\t\t\t{FFFFFF}Public teleports. {AAAAAA}With the {FF0000}red marker{AAAAAA}, you can teleport anywhere on the map.\n\
+	{00FFFF}/v {00AAAA}<ID/name>\t\t{FFFFFF}Spawn vehicles.\n\
+	{006666}/mg\t\t\t{AAAAAA}Minigame menu. {AA0000}(currently in development!)\n\
+	{00FFFF}/set {00AAAA}<w> <h> <m>\t{FFFFFF}Set weather & time. {AAAAAA}<weather> <hours> <minutes>\n\
+	{00FFFF}/pos\t\t\t{FFFFFF}Get your current position coordinates.\n\
+	{00FFFF}/skin {00AAAA}<ID>\t\t{FFFFFF}Set any skin.\n\
+	{00FFFF}/kill\t\t\t{FFFFFF}You kill yourself.\n\
+	{00FFFF}/sound {00AAAA}<ID>\t\t{FFFFFF}Play any sound from its ID.\n\
+	{00FFFF}/ghost \t\t\t{FFFFFF}Enable/Disable Ghost mode.\n\
 	", "{00FF00}OK", "");
 	return 1;
 }
@@ -575,18 +581,18 @@ CMD:cmds(playerid, params[])
 
 CMD:help(playerid, params[])
 {
-    Dialog_Show(playerid, HELP, DIALOG_STYLE_MSGBOX, "{00FF00}Röpke segítség",\
-    "{00FFFF}/cmds\t\t{FFFFFF}A szerveren elérhetõ parancsok.\n\
-    {00FFFF}/t\t\t{FFFFFF}A szerveren elérhetõ teleportok.\n\
+    Dialog_Show(playerid, HELP, DIALOG_STYLE_MSGBOX, "{00FFFF}Quick help",\
+    "{00FFFF}/c\t{FFFFFF}Commands\n\
+    {00FFFF}/t\t{FFFFFF}Teleports\n\
     ", "{00FF00}OK", "");
     return 1;
 }
 
 CMD:t(playerid, params[])
 {
-    Dialog_Show(playerid, TP, DIALOG_STYLE_MSGBOX, "{5555FF}A szerver publikus teleportjai",\
-    "{FFFFFF}A {00FFFF}cián {FFFFFF}színûek gyalog ÉS jármûvel is, a {3333FF}sötétkékek {FFFFFF}kizárólag gyalog érhetõek el.\n\
-    Ezek mellett a {FF0000}piros {FFFFFF}kijelöléssel a térképen bárhova teleportálhatsz.\n\n\
+    Dialog_Show(playerid, TP, DIALOG_STYLE_MSGBOX, "{5555FF}Public teleports",\
+    "{FFFFFF}{00FFFF}Cyan: {FFFFFF}available both on-foot and with vehicles.\n{3333FF}Dark blue: {FFFFFF}only available on-foot.\n\
+    You can teleport anywhere on the map using the{FF0000} red marker.\n\n\
     {00FFFF}/ls\t{FFFFFF}Los Santos\t\t\t{00FFFF}/sb\t{FFFFFF}Santa Maria Beach\n\
     {00FFFF}/lsa\t{FFFFFF}Los Santos Airport\t\t{00FFFF}/pc\t{FFFFFF}Palomino Creek\n\
     {00FFFF}/park\t{FFFFFF}Glen Park (Skatepark)\t\t{00FFFF}/mont\t{FFFFFF}Montgomery\n\
@@ -608,8 +614,7 @@ CMD:t(playerid, params[])
     return 1;
 }
 
-// publikus teleportok listaja, varosok szerint
-// *innentol kezdodnek a publikus teleportok, amiket barki hasznalhat
+// public teleports, by cities
 
 // TEMPLATE:
 // CMD:<nev>(playerid, params[]) { TeleportPlayerToPublicTp(playerid, true, 0.0, 0.0, 0.0, 0.0); return 1; }
@@ -644,7 +649,7 @@ CMD:lp(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, -220.
 CMD:elq(playerid, params[])     { TeleportPlayerToPublicTp(playerid, true, -1291.563720, 2691.097412, 50.062500, 116.0); return 1; }
 CMD:bm(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, -2261.533447, 2318.244384, 4.812500, 0.0); return 1; }
 
-// publikus teleportok vege
+// END OF public teleports
 
 CMD:reg(playerid, params[])
 {
@@ -658,20 +663,20 @@ CMD:reg(playerid, params[])
         {
             SetSVarInt("Reg", 1);
             SetServerRule("reg", "On");
-            SendClientMessageToAll(0x00FF00AA, "%s engedélyezte a regisztrációt.", name);
+            SendClientMessageToAll(0x00FF00AA, "%s enabled account registration.", name);
             return 1;
         }
         else
         {
             SetSVarInt("Reg", 0);
             SetServerRule("reg", "Off");
-            SendClientMessageToAll(0xFF0000AA, "%s letiltotta a regisztrációt.", name);
+            SendClientMessageToAll(0xFF0000AA, "%s disabled account registration.", name);
             return 1;
         }
     }
     else
     {
-        SendClientMessage(playerid, 0xFF0000AA, "Ehhez nincs jogod.");
+        SendClientMessage(playerid, 0xFF0000AA, "Missing permission(s).");
         return 1;
     }
 }

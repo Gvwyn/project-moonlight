@@ -8,7 +8,7 @@
 
 public OnFilterScriptInit()
 {
-    printf("Minigamek (filterscript) sikeresen betoltve.");
+    printf("Minigames filterscript is loaded in.");
     return 1;
 }
 
@@ -20,10 +20,10 @@ public OnFilterScriptExit()
 CMD:minigames(playerid, params[])
 {
 	Dialog_Show(playerid, MGs, DIALOG_STYLE_TABLIST_HEADERS,\
-	"{FFFF00}Minigame választó menü", "\
-	{FFFFFF}Játék megnevezése\t{FFFFFF}Módok\t{FFFFFF}Készítõ(k)\n\
-	{3D85C6}Mérleg\t{AAAAAA}Egy- vagy többjátékos\t{CCCCCC}The_Balazs, White",\
-	"Kiválaszt", "{FF0000}Mégse");
+	"{FFFF00}Minigames", "\
+	{FFFFFF}Minigame\t{FFFFFF}Modes\t{FFFFFF}Creators\n\
+	{3D85C6}The Scale\t{AAAAAA}Single & Multiplayer\t{CCCCCC}The_Balazs, White",\
+	"Select", "{FF0000}Cancel");
 	return 1;
 }
 CMD:minigame(playerid, params[]) return cmd_minigames(playerid, params);

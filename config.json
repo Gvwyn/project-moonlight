@@ -48,7 +48,7 @@
         "vehicle_respawn_time": 10000,
         "weather": 0
     },
-    "language": "EN/HU",
+    "language": "English",
     "logging": {
         "enable": true,
         "file": "log.txt",
@@ -95,7 +95,8 @@
     "pawn": {
         "legacy_plugins": [
             "pawnregex",
-            "streamer"
+            "streamer",
+            "mapandreas"
 		],
         "main_scripts": [
             "gungame 1"

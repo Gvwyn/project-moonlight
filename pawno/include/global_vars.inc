@@ -2,15 +2,15 @@
 Egy fajl, amiben globalis valtozok, illetve funkciok vannak
 nagyresze olyan, ami tobb scriptbol is kell(het)
 */
-#define VERSION "build 28-rev"
-#define GAMEMODE "Bumburnyák"
+#define VERSION "build 29-rev"
+#define GAMEMODE "Test"
 #pragma warning disable 203, 214
 
 new Text:Clock; // ora HH:MM formatumban (jelenleg)
 
 new const countAdmins = 1; // adminok szama
 new Admins[1][] = {"The_Balazs"};
-new AdminLevels[5][] = {"{DDDDDD}Nem", "{33FF33}Moderátor", "{3333FF}Admin", "{AA0000}Fõadmin", "{FF0000}Tulajdonos"};
+new AdminLevels[5][] = {"{DDDDDD}Nem", "{33FF33}Moderator", "{3333FF}Admin", "{AA0000}High Admin", "{FF0000}Owner"};
 // netrol szedett safety feature az adatbazishoz
 // SQL injection ellen ved, escapeli a ' jelet
 stock DB_Escape(text[])
