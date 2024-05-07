@@ -4,13 +4,13 @@ nagyresze olyan, ami tobb scriptbol is kell(het)
 */
 #define VERSION "build 29-rev"
 #define GAMEMODE "Test"
-#pragma warning disable 203, 214
+// #pragma warning disable 203, 214
 
 new Text:Clock; // ora HH:MM formatumban (jelenleg)
 
 new const countAdmins = 1; // adminok szama
-new Admins[1][] = {"The_Balazs"};
-new AdminLevels[5][] = {"{DDDDDD}Nem", "{33FF33}Moderator", "{3333FF}Admin", "{AA0000}High Admin", "{FF0000}Owner"};
+new Admins[1][] = {"Big_Guy"};
+new AdminLevels[5][] = {"{DDDDDD}Nem", "{33FF33}Mod", "{3333FF}Admin", "{AA0000}High Admin", "{FF0000}Owner"};
 // netrol szedett safety feature az adatbazishoz
 // SQL injection ellen ved, escapeli a ' jelet
 stock DB_Escape(text[])

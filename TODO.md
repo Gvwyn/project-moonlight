@@ -1,0 +1,5 @@
+- [ ] /user command to handle user settings such as password, name, friends list etc  
+- [ ] friends list  
+- [ ] /ignore  
+- [ ] /settings for non-user related settings 
+- [ ] some sorta anti-cheat to prevent bad guys from killing the server 

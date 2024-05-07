@@ -91,7 +91,7 @@
         "time_sync_rate": 30000,
         "use_lan_mode": false
     },
-    "password": "faszgeci",
+    "password": "nagybaszas",
     "pawn": {
         "legacy_plugins": [
             "pawnregex",

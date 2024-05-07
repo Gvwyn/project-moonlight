@@ -22,7 +22,7 @@ new
 stock AdvertCheck(text[])
 {
     static Regex:regex;
-    if (!regex) regex = Regex_New("(?:.*\\b(?:\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|(?:[\\w-]+\\.)+\\w{2,})(?::\\d{1,5})?\\b.*)|(?:.*\\b(?:\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|(?:[\\w-]+\\.)+\\w{2,})\\b.*)");
+    if (!regex) regex = Regex_New(".*\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b|\\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\\b*");
     return Regex_Check(text, regex);
 }
 
@@ -33,6 +33,14 @@ forward SetPlayerSkinFromFs(playerid, skinid); // updates the g_PlayerSkin value
 forward TeleportPlayerToPublicTp(playerid, areVehiclesAllowed, Float:x, Float:y, Float:z, Float:angle);
 forward CameraPan(playerid);
 forward SpawnPlayerFromCamPan(playerid);
+
+// might add a DB update to this later on
+SetPlayerMoney(playerid, amount, op = 0)
+{
+    ResetPlayerMoney(playerid);
+    GivePlayerMoney(playerid, amount+op);
+    return 1;
+}
 
 main()
 {
@@ -135,8 +143,7 @@ public OnPlayerUpdate(playerid)
     {
         if (GetPlayerMoney(playerid) != g_PlayerCash[playerid])
         {
-            ResetPlayerMoney(playerid);
-            GivePlayerMoney(playerid, g_PlayerCash[playerid]);
+            SetPlayerMoney(playerid, g_PlayerCash[playerid]);
             return 1;
         }
     }
@@ -455,7 +462,7 @@ Dialog:LOGIN(playerid, response, listitem, inputtext[])
             SetPlayerScore(playerid, strval(Field));
             DB_GetFieldStringByName(Result, "clampCash", Field, 21);
             g_PlayerCash[playerid] = strval(Field);
-            GivePlayerMoney(playerid, g_PlayerCash[playerid]);
+            SetPlayerMoney(playerid, g_PlayerCash[playerid]);
             DB_GetFieldStringByName(Result, "Admin", Field, 4);
             Bit8_Set(g_AdminLevel, playerid, strval(Field));
             Bit1_Set(g_PlayerLogged, playerid, true);
@@ -489,7 +496,6 @@ Dialog:LOGIN(playerid, response, listitem, inputtext[])
 Dialog:REGISTER(playerid, response, listitem, inputtext[])
 {
     new
-        DBResult: Result,
         name[MAX_PLAYER_NAME],
         serial[41]
     ;
@@ -507,7 +513,7 @@ Dialog:REGISTER(playerid, response, listitem, inputtext[])
         {
             DB_ExecuteQuery(Database, "INSERT INTO `Players` (`UID`, `Player`, `Password`, `Skin_ID`, `GPCI`, `Score`, `Cash`, `Admin`) VALUES(NULL, '%s', '%s', '0', '%s', '0', '2500', '0')", DB_Escape(name), DB_Escape(inputtext), DB_Escape(serial));
             Bit1_Set(g_PlayerLogged, playerid, true); 
-            GivePlayerMoney(playerid, 2500);
+            SetPlayerMoney(playerid, 2500);
             SetPlayerScore(playerid, 0);
             SendClientMessage(playerid, 0x00FF00FF, "You've successfully registered the name {FFFFFF}%s", name);
             TogglePlayerSpectating(playerid, false);
@@ -709,8 +715,7 @@ CMD:doubloon(playerid, params[])
 		DB_GetFieldStringByName(Result, "clampCash", clampDollars, 25);
 		SendClientMessage(playerid, 0x00AA00FF, "$%s", dollars);
 		g_PlayerCash[playerid] = strval(clampDollars);
-		ResetPlayerMoney(playerid);
-		GivePlayerMoney(playerid, g_PlayerCash[playerid]);
+		SetPlayerMoney(playerid, g_PlayerCash[playerid]);
 		DB_FreeResultSet(Result);
 		return 1;
 	}

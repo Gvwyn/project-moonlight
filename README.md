@@ -42,6 +42,7 @@ SA:MP server from the ground up in 2024, because im crazy like that
         - i created roughly 30 teleports (for now)
     - **anti-advert**, now IP addresses and suspicious domain names are blocked by the server
     - most of the server is now translated to English -> some comments may remain in Hungarian, im way too lazy to translate those too
+    - SetPlayerMoney function for better code clarity
 
 - BUILD 28
     - functions handling money now actually work
@@ -54,6 +55,6 @@ SA:MP server from the ground up in 2024, because im crazy like that
 - BUILD 0-26 
     - the server now uses SQLite instead of Y_Ini
     - login system implemented
-    - some values such as money is now handled by the database, allowing values up to 9,223,372,036,854,775,807 to be stored
-    - implemented a few common commands  
+    - some values such as money are now handled by the database, allowing values up to 9,223,372,036,854,775,807 to be stored
+    - implemented a few common commands
     - registration is now toggleable
