@@ -20,7 +20,7 @@ SA:MP server from the ground up in 2024, because im crazy like that
 >   - ban is reserved for extreme cases, eg. cheats that lag the server, cheats that are difficult to catch etc.
 
 ## changelog
-- BUILD 29-revision (latest build) last edited: 5/6/2024
+- BUILD 29-revision (latest build) last edited: 5/10/2024
     - created the minigame menu
         - started a script for a minigame inspired by Alice In Borderland (Scale) - idea by White
     - **new includes**:
@@ -43,6 +43,8 @@ SA:MP server from the ground up in 2024, because im crazy like that
     - **anti-advert**, now IP addresses and suspicious domain names are blocked by the server
     - most of the server is now translated to English -> some comments may remain in Hungarian, im way too lazy to translate those too
     - SetPlayerMoney function for better code clarity
+    - added database table "User_Settings" for certain you know, user settings and all queries are now up to date to this change
+    - welcoming message based on the time of the day (good morning, good evening etc.)
 
 - BUILD 28
     - functions handling money now actually work

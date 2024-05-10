@@ -9,7 +9,7 @@ nagyresze olyan, ami tobb scriptbol is kell(het)
 new Text:Clock; // ora HH:MM formatumban (jelenleg)
 
 new const countAdmins = 1; // adminok szama
-new Admins[1][] = {"Big_Guy"};
+new Admins[1][] = {"The_Balazs"};
 new AdminLevels[5][] = {"{DDDDDD}Nem", "{33FF33}Mod", "{3333FF}Admin", "{AA0000}High Admin", "{FF0000}Owner"};
 // netrol szedett safety feature az adatbazishoz
 // SQL injection ellen ved, escapeli a ' jelet
@@ -49,6 +49,8 @@ stock IsNaN(number)
 {
     return 1;
 }
+
+new const WelcomingMessages[5][] = {"Good morning", "Good day", "Good afternoon", "Good evening", "Good night"};
 
 /*
 ez a megkozelites lehet hogy rengeteg agyfaszt fog okozni, de igy lenyegesebben kevesebb memoriat hasznal a jatek

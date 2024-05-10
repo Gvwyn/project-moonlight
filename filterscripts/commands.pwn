@@ -205,20 +205,6 @@ CMD:ghost(playerid, params[])
 	return 1;
 }
 
-// ikon lerakas
-CMD:pickup(playerid, params[])
-{
-	new Float:x, Float:y, Float:z;
-	GetPlayerPos(playerid, x, y, z);
-	new object;
-	if (!sscanf(params, "i", object))
-	{
-		CreatePickup(object, 1, x, y, z, -1);
-		return 1;
-	}
-	SendClientMessage(playerid, -1, "Na ezt elbasztad.");
-	return 1;
-}
 
 CMD:stats(playerid, params[])
 {
@@ -274,10 +260,16 @@ CMD:stats(playerid, params[])
 	"{FFFFFF}UID:\t\t{00FFFF}%s\n\
 	{FFFFFF}Name:\t\t{%06x}%s\n\
 	{FFFFFF}Admin:\t\t%s{FF0000} (%s)\n\
-	{FFFFFF}Password: \t\t{00FFFF}%s\n\
+	{FFFFFF}Password:\t{00FFFF}%s\n\
 	{FFFFFF}Money: \t\t{00AA00}$%s\n{FFFFFF}$ in-hand: \t{007700}$%s\n\
 	{FFFFFF}Score: \t\t{DDDDDD}%s db", "{00FF00}OK", "", uid, GetPlayerColor(playerid) >>> 8, name, AdminLevels[strval(admin)], admin, pass, dollars, dollarsInHand, score);
 	DB_FreeResultSet(Result);
+	return 1;
+}
+
+CMD:test(playerid, params[])
+{
+	SendClientMessage(playerid, -1, "%06x", GetPlayerColor(playerid) >> 8);
 	return 1;
 }
 

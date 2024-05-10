@@ -9,6 +9,7 @@
 #include <sscanf2>
 
 new g_PlayerCash[MAX_PLAYERS] = {0, ...};
+new WelcomingMessage = 0;
 
 new
     Bit1: g_PlayerLogged<MAX_PLAYERS>, // 0 & 1
@@ -93,18 +94,6 @@ public OnGameModeInit()
 {
     Database = DB_Open("Server.db");
     MapAndreas_Init(MAP_ANDREAS_MODE_FULL, "scriptfiles/SAFull.hmap");
-    /*
-    DB_ExecuteQuery(Database, "CREATE TABLE IF NOT EXISTS `Players` (\
-    `UID` INTEGER PRIMARY KEY AUTOINCREMENT,\
-    `Player` VARCHAR(24),\
-    `Password` VARCHAR(64),\
-    `GPCI` VARCHAR(41),\
-    `Score` INT,\
-    `Cash` INT,\
-    `Skin_ID` INT,\
-    `Admin` INT\
-	);");
-    */
 
 	if(Database)
 	{
@@ -175,11 +164,20 @@ public OnClientCheckResponse(playerid, actionid, memaddr, retndata)
 }
 */
 
+// updates the textdraw clock and also updates the welcoming message
 public UpdateClock()
 {
-    new hours, minutes, seconds, clock;
+    // clock
+    new hours, minutes, seconds;
     gettime(hours, minutes, seconds);
     TextDrawSetString(Clock, "%02d:%02d", hours, minutes);
+
+    // welcoming message
+    if (4 < hours && hours < 10)       WelcomingMessage = 0;
+    else if (10 < hours && hours < 15) WelcomingMessage = 1;
+    else if (15 < hours && hours < 18) WelcomingMessage = 2;
+    else if (18 < hours && hours < 21) WelcomingMessage = 3;
+    else WelcomingMessage = 4;
 }
 
 public KickPlayer(playerid) Kick(playerid);
@@ -282,8 +280,7 @@ public OnPlayerConnect(playerid)
     
     Bit1_Set(g_PlayerLogged, playerid, false);
 
-    SendDeathMessage(playerid, INVALID_PLAYER_ID, 200);
-    SendClientMessage(playerid, 0x00FF00AA, "Welcome to the server, %s!", name);
+    SendClientMessage(playerid, 0x00FF00AA, "%s, {%06x}%s!", WelcomingMessages[WelcomingMessage], GetPlayerColor(playerid) >> 8, name);
 	SendClientMessageToAll(0x00FFFFFF, "%s {FFFFFF}joined the server.", name);
     if(DB_GetRowCount(Result))
     {
@@ -324,13 +321,17 @@ public OnPlayerDisconnect(playerid, reason)
         "left the server",
         "has been kicked",
         "disappeared into thin air",
-        "has been automatically kicked."
+        "has been automatically kicked"
     };
     SendDeathMessage(playerid, INVALID_PLAYER_ID, 200);
     if (reason != 2) SendClientMessageToAll(-1, "{AAAAAA}%s {DDDDDD}%s.", playerName, reasons[reason]);
 
     // player's skin choice is saved when the player leaves the server
-    DB_ExecuteQuery(Database, "UPDATE `Players` SET `Skin_ID` = %i WHERE `Player` = '%s'", GetPlayerSkin(playerid), playerName);
+    new DBResult:DBCall, UID;
+    DB_ExecuteQuery(Database, "SELECT `UID` FROM `Players` WHERE `Player` = '%i'", playerName);
+    UID = DB_GetFieldIntByName(DBCall, "UID");
+
+    DB_ExecuteQuery(Database, "UPDATE `User_Settings` SET `PlayerSkinID` = %i WHERE `UID` = '%i'", GetPlayerSkin(playerid), playerName, UID);
 
     Bit1_Set(g_PlayerLogged, playerid, false);
     Bit1_Set(g_PlayerIsSpectating, playerid, false);
@@ -390,6 +391,8 @@ public OnPlayerClickMap(playerid, Float:fX, Float:fY, Float:fZ)
         return 1;
     }
 
+    pZ += 0.75;
+
     // SetPlayerInterior(playerid, 0);
 	if(IsPlayerInAnyVehicle(playerid) && GetVehicleDriver(GetPlayerVehicleID(playerid)) == playerid)
     {
@@ -447,16 +450,16 @@ Dialog:LOGIN(playerid, response, listitem, inputtext[])
 
     if(response)
     {
-        Result = DB_ExecuteQuery(Database, "SELECT `Player`, `Password`, `Score`, `Admin`, `Skin_ID`, \
+        Result = DB_ExecuteQuery(Database, "SELECT `Player`, `Password`, `Score`, `Admin`, `PlayerSkinID`, \
         printf('%%d', CASE \
         WHEN `Cash` < -999999999 THEN -999999999 \
         WHEN `Cash` > 999999999 THEN 999999999 \
         ELSE `Cash` END) AS clampCash \
-        FROM `Players` WHERE `Player` = '%s' COLLATE NOCASE AND `Password` = '%s'", DB_Escape(name), DB_Escape(inputtext));
+        FROM `Players`, `User_Settings` WHERE players.UID = user_settings.UID AND `Player` = '%s' COLLATE NOCASE AND `Password` = '%s'", DB_Escape(name), DB_Escape(inputtext));
         if(DB_GetRowCount(Result))
         {
             new Field[16];
-            DB_GetFieldStringByName(Result, "Skin_ID", Field);
+            DB_GetFieldStringByName(Result, "PlayerSkinID", Field);
             Bit16_Set(g_PlayerSkin, playerid, strval(Field));
             DB_GetFieldStringByName(Result, "Score", Field);
             SetPlayerScore(playerid, strval(Field));
@@ -468,7 +471,7 @@ Dialog:LOGIN(playerid, response, listitem, inputtext[])
             Bit1_Set(g_PlayerLogged, playerid, true);
             Bit1_Set(g_PlayerIsSpectating, playerid, false); // visszakapcsolja a SPAWN gombot, es ezt el is menti 
             TogglePlayerSpectating(playerid, false);
-            SendClientMessage(playerid, 0x11DD11AA, "You successfully logged in.");
+            SendClientMessage(playerid, 0x00FF00AA, "You successfully logged in.");
             SetTimerEx("SpawnPlayerFromCamPan", 100, false, "i", playerid);
         }
         // helytelen jelszo
@@ -511,11 +514,12 @@ Dialog:REGISTER(playerid, response, listitem, inputtext[])
         }
         else
         {
-            DB_ExecuteQuery(Database, "INSERT INTO `Players` (`UID`, `Player`, `Password`, `Skin_ID`, `GPCI`, `Score`, `Cash`, `Admin`) VALUES(NULL, '%s', '%s', '0', '%s', '0', '2500', '0')", DB_Escape(name), DB_Escape(inputtext), DB_Escape(serial));
+            DB_ExecuteQuery(Database, "INSERT INTO `Players` (`UID`, `Player`, `Password`, `GPCI`, `Score`, `Cash`, `Admin`) VALUES(NULL, '%s', '%s', '%s', '0', '2500', '0')", DB_Escape(name), DB_Escape(inputtext), DB_Escape(serial));
+            DB_ExecuteQuery(Database, "INSERT INTO `User_Settings` (`UID`, `PlayerColor`, `PlayerSpawnPreference`, `PlayerSkinID`) VALUES(NULL, '%i', '0', '0')", GetPlayerColor(playerid) >> 8);            
             Bit1_Set(g_PlayerLogged, playerid, true); 
             SetPlayerMoney(playerid, 2500);
             SetPlayerScore(playerid, 0);
-            SendClientMessage(playerid, 0x00FF00FF, "You've successfully registered the name {FFFFFF}%s", name);
+            SendClientMessage(playerid, 0x00FF00FF, "You've successfully registered the username {FFFFFF}%s.", name);
             TogglePlayerSpectating(playerid, false);
             Bit1_Set(g_PlayerIsSpectating, playerid, 0); // visszakapcsolja a SPAWN gombot 
             SetTimerEx("SpawnPlayerFromCamPan", 100, false, "i", playerid);
@@ -690,38 +694,43 @@ CMD:reg(playerid, params[])
 // penz allitas
 CMD:doubloon(playerid, params[])
 {
-	new
-		DBResult:Result,
-		op,
-		inputDollars,
-		dollars[35],
-		clampDollars[25],
-		name[24]
-	;
-	GetPlayerName(playerid, name, 24);
-	if (!sscanf(params, "ii", op, inputDollars))
-	{
-		if (op == 1) DB_ExecuteQuery(Database, "UPDATE `Players` SET `Cash` = `Cash` + %i WHERE `Player` = '%s'", inputDollars, DB_Escape(name));
-		else if (op == 0) DB_ExecuteQuery(Database, "UPDATE `Players` SET `Cash` = `Cash` - %i WHERE `Player` = '%s'", inputDollars, DB_Escape(name));
+    if(Bit8_Get(g_AdminLevel, playerid) > 0)
+    {
+        new
+            DBResult:Result,
+            op,
+            inputDollars,
+            dollars[35],
+            clampDollars[25],
+            name[24]
+        ;
+        GetPlayerName(playerid, name, 24);
+        if (!sscanf(params, "ii", op, inputDollars))
+        {
+            if (op == 1) DB_ExecuteQuery(Database, "UPDATE `Players` SET `Cash` = `Cash` + %i WHERE `Player` = '%s'", inputDollars, DB_Escape(name));
+            else if (op == 0) DB_ExecuteQuery(Database, "UPDATE `Players` SET `Cash` = `Cash` - %i WHERE `Player` = '%s'", inputDollars, DB_Escape(name));
 
-		Result = DB_ExecuteQuery(Database,\
-		"SELECT printf('%%d', CASE \
-		WHEN `Cash` < -999999999 THEN -999999999 \
-		WHEN `Cash` > 999999999 THEN 999999999 \
-		ELSE `Cash` END) AS clampCash, \
-		printf('%%,d', `Cash`) as fCash \
-		FROM `Players` WHERE `Player` = '%s'", DB_Escape(name));
-		DB_GetFieldStringByName(Result, "fCash", dollars, 30);
-		DB_GetFieldStringByName(Result, "clampCash", clampDollars, 25);
-		SendClientMessage(playerid, 0x00AA00FF, "$%s", dollars);
-		g_PlayerCash[playerid] = strval(clampDollars);
-		SetPlayerMoney(playerid, g_PlayerCash[playerid]);
-		DB_FreeResultSet(Result);
-		return 1;
-	}
-	else
-	{
-		SendClientMessage(playerid, 0xFF0000AA, "/doubloon <0/1> <$>");
-		return 1;
-	}
+            Result = DB_ExecuteQuery(Database,\
+            "SELECT printf('%%d', CASE \
+            WHEN `Cash` < -999999999 THEN -999999999 \
+            WHEN `Cash` > 999999999 THEN 999999999 \
+            ELSE `Cash` END) AS clampCash, \
+            printf('%%,d', `Cash`) as fCash \
+            FROM `Players` WHERE `Player` = '%s'", DB_Escape(name));
+            DB_GetFieldStringByName(Result, "fCash", dollars, 30);
+            DB_GetFieldStringByName(Result, "clampCash", clampDollars, 25);
+            SendClientMessage(playerid, 0x00AA00FF, "$%s", dollars);
+            g_PlayerCash[playerid] = strval(clampDollars);
+            SetPlayerMoney(playerid, g_PlayerCash[playerid]);
+            DB_FreeResultSet(Result);
+            return 1;
+        }
+        else
+        {
+            SendClientMessage(playerid, 0xFF0000AA, "/doubloon <0/1> <$>");
+            return 1;
+        }
+    }
+    SendClientMessage(playerid, 0xFF0000AA, "Missing permission(s).");
+    return 1;
 }
