@@ -269,7 +269,7 @@ CMD:stats(playerid, params[])
 
 CMD:test(playerid, params[])
 {
-	SendClientMessage(playerid, -1, "%06x", GetPlayerColor(playerid) >> 8);
+	SendClientMessage(playerid, -1, "%06x", GetPlayerColor(playerid) >>> 8);
 	return 1;
 }
 

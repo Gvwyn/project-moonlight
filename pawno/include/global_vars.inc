@@ -4,6 +4,7 @@ nagyresze olyan, ami tobb scriptbol is kell(het)
 */
 #define VERSION "build 29-rev"
 #define GAMEMODE "Test"
+#define UNKNOWN_ZONE_NAME "Unknown area"
 // #pragma warning disable 203, 214
 
 new Text:Clock; // ora HH:MM formatumban (jelenleg)

@@ -1,7 +1,8 @@
 # Project Hell
+
 SA:MP server from the ground up in 2024, because im crazy like that
 
-### current includes, plugins and stuff
+## current includes, plugins and stuff
 
 - **[open.mp 1.2.0.2670](https://github.com/openmultiplayer)**  
 - **[iZCMD 0.2.3.0](https://github.com/YashasSamaga/I-ZCMD)**
@@ -11,15 +12,17 @@ SA:MP server from the ground up in 2024, because im crazy like that
 - **[Pawn.Regex 1.2.3-omp](https://github.com/katursis/Pawn.Regex)**
 - **[streamer 2.9.6](https://github.com/samp-incognito/samp-streamer-plugin)** !!
 - **[MapAndreas 1.2.1](https://github.com/philip1337/samp-plugin-mapandreas)**
+- **[samp-map-zones](https://github.com/philip1337/samp-plugin-mapandreas)**
 
-> - **CONCEPT:** 
+> - **CONCEPT for future versions:**
 >   - when catching cheaters, instead of an actual ban, shadowban the player, which
->       - blocks every activity for the player on the server, where they could exploit the cheats for gain
->       - puts them away from legit players
+>         - blocks every activity for the player on the server, where they could exploit the cheats for gain
+>         - puts them away from legit players
 >   - with this system, if somebody just wants to fly around, they can, but they cant use their cheats to gain eg. money
 >   - ban is reserved for extreme cases, eg. cheats that lag the server, cheats that are difficult to catch etc.
 
 ## changelog
+
 - BUILD 29-revision (latest build) last edited: 5/10/2024
     - created the minigame menu
         - started a script for a minigame inspired by Alice In Borderland (Scale) - idea by White

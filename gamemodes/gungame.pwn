@@ -2,11 +2,13 @@
 #include <global_vars>
 #include <streamer>
 #include <mapandreas>
+#include <map-zones>
 #include <easyDialog>
 #include <Pawn.Regex>
 #include <rBits>
 #include <izcmd>
 #include <sscanf2>
+// kezdenek kicsit gyulni az includeok
 
 new g_PlayerCash[MAX_PLAYERS] = {0, ...};
 new WelcomingMessage = 0;
@@ -280,7 +282,7 @@ public OnPlayerConnect(playerid)
     
     Bit1_Set(g_PlayerLogged, playerid, false);
 
-    SendClientMessage(playerid, 0x00FF00AA, "%s, {%06x}%s!", WelcomingMessages[WelcomingMessage], GetPlayerColor(playerid) >> 8, name);
+    SendClientMessage(playerid, 0x00FF00AA, "%s, {%06x}%s!", WelcomingMessages[WelcomingMessage], GetPlayerColor(playerid) >>> 8, name);
 	SendClientMessageToAll(0x00FFFFFF, "%s {FFFFFF}joined the server.", name);
     if(DB_GetRowCount(Result))
     {
@@ -391,7 +393,7 @@ public OnPlayerClickMap(playerid, Float:fX, Float:fY, Float:fZ)
         return 1;
     }
 
-    pZ += 0.75;
+    pZ += 1.0; // neha beledob a foldbe, ezert kicsit feljebb tesszuk a karaktert
 
     // SetPlayerInterior(playerid, 0);
 	if(IsPlayerInAnyVehicle(playerid) && GetVehicleDriver(GetPlayerVehicleID(playerid)) == playerid)
@@ -403,7 +405,11 @@ public OnPlayerClickMap(playerid, Float:fX, Float:fY, Float:fZ)
 	{
     	SetPlayerPos(playerid, fX, fY, pZ);
 	}
-    SendClientMessage(playerid, 0x00FF00FF, "Teleported to %f, %f, %f.", fX, fY, pZ);
+    new MapZone:zone = GetMapZoneAtPoint2D(fX, fY);
+    new zonename[MAX_MAP_ZONE_NAME];
+    if (zone == INVALID_MAP_ZONE_ID) { strcopy(zonename, UNKNOWN_ZONE_NAME, 12); }
+    else GetMapZoneName(zone, zonename);
+    SendClientMessage(playerid, 0x00FF00FF, "Teleported to {55FF55}%s {00FF00}at %.2f, %.2f, %.2f.", zonename, fX, fY, pZ);
     return 1;
 }
 
@@ -434,6 +440,14 @@ public OnPlayerCommandReceived(playerid,cmdtext[])
     }
 	return 1;
 }
+
+public OnDialogPerformed(playerid, const dialog[], response, success)
+{
+    return 1;
+}
+
+// FROM THIS POINT ON, ONLY COMMANDS & THEIR DIALOGS SHOULD BE DEFINED
+// NOTHING ELSE
 
 Dialog:LOGIN(playerid, response, listitem, inputtext[])
 {
@@ -542,7 +556,7 @@ CMD:setadmin(playerid, params[])
         {
             GetPlayerName(who, name, sizeof(name));            
             DB_ExecuteQuery(Database, "UPDATE `Players` SET `Admin` = %i WHERE `Player` = '%s'", level, name);
-            SendClientMessage(playerid, 0xAA0000FF, "%s (%i) admin szintje mostantól %s {AA0000}(%i).", name, who, AdminLevels[level], level);
+            SendClientMessage(playerid, 0xAA0000FF, "%s (%i)'s admin level is now %s {AA0000}(%i).", name, who, AdminLevels[level], level);
             Bit8_Set(g_AdminLevel, who, level);
             return 1;
         }
@@ -594,6 +608,7 @@ CMD:help(playerid, params[])
     Dialog_Show(playerid, HELP, DIALOG_STYLE_MSGBOX, "{00FFFF}Quick help",\
     "{00FFFF}/c\t{FFFFFF}Commands\n\
     {00FFFF}/t\t{FFFFFF}Teleports\n\
+    {00FFFF}/u\t{FFFFFF}User Settings\n\
     ", "{00FF00}OK", "");
     return 1;
 }
@@ -734,3 +749,49 @@ CMD:doubloon(playerid, params[])
     SendClientMessage(playerid, 0xFF0000AA, "Missing permission(s).");
     return 1;
 }
+
+CMD:u(playerid, params[])
+{
+	Dialog_Show(playerid, USER, DIALOG_STYLE_LIST, "{00FF00}User Settings", "{00FF00}Change username\n{FF0000}Change password\n{%06x}Change player color\n{00FFFF}Change spawn location", "{00FF00}Choose", "{FF0000}Exit", GetPlayerColor(playerid) >>> 8);
+	return 1;
+}
+
+Dialog:USER(playerid, response, listitem, inputtext[])
+{
+	// Change username
+	if (listitem == 0)
+	{
+		SendClientMessage(playerid, 0xFF0000FF, "Not yet implemented.");
+		return 1;
+	}
+
+	// Change password
+	else if (listitem == 1)
+	{
+		SendClientMessage(playerid, 0xFF0000FF, "Not yet implemented.");	
+		return 1;
+	}
+
+	// Change player color (& and save it to database)
+	else if (listitem == 2)
+	{
+        // WHY THE FUCK IS THIS NOT SHWOING UP
+		Dialog_Show(playerid, USER_COLOR, DIALOG_STYLE_INPUT, "{00FF00}UCP: Changing player color", "{AAAAAA}6 digit hexidecimal values are accepted, ranging from {000000}#000000 {AAAAAA}to {FFFFFF}#FFFFFF\nPlease enter your new color:", "{00FF00}Enter", "{FF0000}Exit");
+	}
+
+	// Change player spawn preference
+	else if (listitem == 3)
+	{
+		SendClientMessage(playerid, 0xFF0000FF, "Not yet implemented.");
+		return 1;
+	}
+}
+
+//Dialog:USER_USERNAME(playerid, response, listitem, inputtext[])
+//Dialog:USER_PASSWORD(playerid, response, listitem, inputtext[])
+Dialog:USER_COLOR(playerid, response, listitem, inputtext[])
+{
+	if(!response) Dialog_Show(playerid, USER, DIALOG_STYLE_LIST, "{00FF00}User Settings", "{00FF00}Change username\n{FF0000}Change password\n{%06x}Change player color\n{00FFFF}Change spawn location", "{00FF00}Choose", "{FF0000}Exit", GetPlayerColor(playerid) >>> 8);
+	return 0;
+}
+//Dialog:USER_SPAWN(playerid, response, listitem, inputtext[])
