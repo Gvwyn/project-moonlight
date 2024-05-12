@@ -10,6 +10,9 @@
 #include <sscanf2>
 // kezdenek kicsit gyulni az includeok
 
+#define PRESSED(%0) \
+    (((newkeys & (%0)) == (%0)) && ((oldkeys & (%0)) != (%0)))
+
 new g_PlayerCash[MAX_PLAYERS] = {0, ...};
 new WelcomingMessage = 0;
 
@@ -34,6 +37,7 @@ forward KickPlayer(playerid);
 forward BanPlayer(playerid, reason[]);
 forward SetPlayerSkinFromFs(playerid, skinid); // updates the g_PlayerSkin value, called from filterscripts
 forward TeleportPlayerToPublicTp(playerid, areVehiclesAllowed, Float:x, Float:y, Float:z, Float:angle);
+forward ResetPlayerCar(playerid);
 forward CameraPan(playerid);
 forward SpawnPlayerFromCamPan(playerid);
 
@@ -220,6 +224,18 @@ public TeleportPlayerToPublicTp(playerid, areVehiclesAllowed, Float:x, Float:y, 
     }
 }
 
+// does NOT check whether or not the player is in a vehicle!!!
+public ResetPlayerCar(playerid)
+{
+    new vehid = GetPlayerVehicleID(playerid);
+    new Float:pX, Float:pY, Float:pZ, Float:vehZ;
+    GetVehiclePos(vehid, pX, pY, pZ);
+    GetVehicleZAngle(vehid, vehZ);
+    SetVehiclePos(vehid, pX, pY, pZ);
+    SetVehicleZAngle(vehid, vehZ);
+    return 1;
+}
+
 // AGYBASZAS
 public CameraPan(playerid)
 {
@@ -333,7 +349,7 @@ public OnPlayerDisconnect(playerid, reason)
     DB_ExecuteQuery(Database, "SELECT `UID` FROM `Players` WHERE `Player` = '%i'", playerName);
     UID = DB_GetFieldIntByName(DBCall, "UID");
 
-    DB_ExecuteQuery(Database, "UPDATE `User_Settings` SET `PlayerSkinID` = %i WHERE `UID` = '%i'", GetPlayerSkin(playerid), playerName, UID);
+    DB_ExecuteQuery(Database, "UPDATE `User_Settings` SET `PlayerSkinID` = %i WHERE `UID` = '%i'", GetPlayerSkin(playerid), UID);
 
     Bit1_Set(g_PlayerLogged, playerid, false);
     Bit1_Set(g_PlayerIsSpectating, playerid, false);
@@ -399,7 +415,10 @@ public OnPlayerClickMap(playerid, Float:fX, Float:fY, Float:fZ)
 	if(IsPlayerInAnyVehicle(playerid) && GetVehicleDriver(GetPlayerVehicleID(playerid)) == playerid)
     {
         new vehicleid = GetPlayerVehicleID(playerid);
+        new Float:vehZ;
+        GetVehicleZAngle(vehicleid, vehZ);
         SetVehiclePos(vehicleid, fX, fY, pZ);
+        SetVehicleZAngle(playerid, vehZ);
     }
 	else
 	{
@@ -416,7 +435,7 @@ public OnPlayerClickMap(playerid, Float:fX, Float:fY, Float:fZ)
 public OnPlayerStateChange(playerid, PLAYER_STATE:newstate, PLAYER_STATE:oldstate)
 {
 	// hippity hoppity this is now my property
-    if (oldstate == PLAYER_STATE_ONFOOT && newstate == PLAYER_STATE_DRIVER)
+    if ((oldstate == PLAYER_STATE_ONFOOT && newstate == PLAYER_STATE_DRIVER) || (oldstate == PLAYER_STATE_DRIVER && newstate == PLAYER_STATE_DRIVER))
     {
         new vehicleid = GetPlayerVehicleID(playerid);
         AddVehicleComponent(vehicleid, 1010);
@@ -425,7 +444,29 @@ public OnPlayerStateChange(playerid, PLAYER_STATE:newstate, PLAYER_STATE:oldstat
     return 1;
 }
 
-public OnPlayerCommandReceived(playerid,cmdtext[])
+public OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys)
+{
+    // add nitro whenever the player activates it
+    if (PRESSED(KEY_FIRE))
+    {
+        if (IsPlayerInAnyVehicle(playerid))
+        {
+            AddVehicleComponent(GetPlayerVehicleID(playerid), 1010);
+        }
+    }
+
+    // stops the vehicle instantly
+    if (PRESSED(KEY_NO))
+    {
+        if (IsPlayerInAnyVehicle(playerid))
+        {
+            ResetPlayerCar(playerid);
+        }
+    }
+    return 1;
+}
+
+public OnPlayerCommandReceived(playerid, cmdtext[])
 {
     if(Bit1_Get(g_PlayerLogged, playerid) == 0)
     {
@@ -589,7 +630,8 @@ CMD:setpos(playerid, params[])
 CMD:c(playerid, params[])
 {
 	Dialog_Show(playerid, CMDS, DIALOG_STYLE_MSGBOX, "{00FF00}Commands",\
-	"{00FFFF}/t\t\t\t{FFFFFF}Public teleports. {AAAAAA}With the {FF0000}red marker{AAAAAA}, you can teleport anywhere on the map.\n\
+	"{FFFFFF}Common commands\n\
+    {00FFFF}/t\t\t\t{FFFFFF}Public teleports. {AAAAAA}With the {FF0000}red marker{AAAAAA}, you can teleport anywhere on the map.\n\
 	{00FFFF}/v {00AAAA}<ID/name>\t\t{FFFFFF}Spawn vehicles.\n\
 	{006666}/mg\t\t\t{AAAAAA}Minigame menu. {AA0000}(currently in development!)\n\
 	{00FFFF}/set {00AAAA}<w> <h> <m>\t{FFFFFF}Set weather & time. {AAAAAA}<weather> <hours> <minutes>\n\
@@ -598,6 +640,8 @@ CMD:c(playerid, params[])
 	{00FFFF}/kill\t\t\t{FFFFFF}You kill yourself.\n\
 	{00FFFF}/sound {00AAAA}<ID>\t\t{FFFFFF}Play any sound from its ID.\n\
 	{00FFFF}/ghost \t\t\t{FFFFFF}Enable/Disable Ghost mode.\n\
+    {FFFFFF}\nVehicle-related commands:\n\
+    {00FFFF}/flip \t\t\t{FFFFFF}Flip and reset the car's velocity. {AAAAAA}Alternatively, you can press {00FF00}N.\n\
 	", "{00FF00}OK", "");
 	return 1;
 }
@@ -750,48 +794,19 @@ CMD:doubloon(playerid, params[])
     return 1;
 }
 
-CMD:u(playerid, params[])
+CMD:flip(playerid, params[])
 {
-	Dialog_Show(playerid, USER, DIALOG_STYLE_LIST, "{00FF00}User Settings", "{00FF00}Change username\n{FF0000}Change password\n{%06x}Change player color\n{00FFFF}Change spawn location", "{00FF00}Choose", "{FF0000}Exit", GetPlayerColor(playerid) >>> 8);
-	return 1;
-}
-
-Dialog:USER(playerid, response, listitem, inputtext[])
-{
-	// Change username
-	if (listitem == 0)
-	{
-		SendClientMessage(playerid, 0xFF0000FF, "Not yet implemented.");
-		return 1;
-	}
-
-	// Change password
-	else if (listitem == 1)
-	{
-		SendClientMessage(playerid, 0xFF0000FF, "Not yet implemented.");	
-		return 1;
-	}
-
-	// Change player color (& and save it to database)
-	else if (listitem == 2)
-	{
-        // WHY THE FUCK IS THIS NOT SHWOING UP
-		Dialog_Show(playerid, USER_COLOR, DIALOG_STYLE_INPUT, "{00FF00}UCP: Changing player color", "{AAAAAA}6 digit hexidecimal values are accepted, ranging from {000000}#000000 {AAAAAA}to {FFFFFF}#FFFFFF\nPlease enter your new color:", "{00FF00}Enter", "{FF0000}Exit");
-	}
-
-	// Change player spawn preference
-	else if (listitem == 3)
-	{
-		SendClientMessage(playerid, 0xFF0000FF, "Not yet implemented.");
-		return 1;
-	}
+    if(IsPlayerInAnyVehicle(playerid))
+    {
+        SendClientMessage(playerid, 0x00FF00FF, "You flipped your vehicle.");
+        ResetPlayerCar(playerid);
+        return 1;
+    }
+    SendClientMessage(playerid, 0xFF0000FF, "You are not in a vehicle.");
+    return 1;
 }
 
 //Dialog:USER_USERNAME(playerid, response, listitem, inputtext[])
 //Dialog:USER_PASSWORD(playerid, response, listitem, inputtext[])
-Dialog:USER_COLOR(playerid, response, listitem, inputtext[])
-{
-	if(!response) Dialog_Show(playerid, USER, DIALOG_STYLE_LIST, "{00FF00}User Settings", "{00FF00}Change username\n{FF0000}Change password\n{%06x}Change player color\n{00FFFF}Change spawn location", "{00FF00}Choose", "{FF0000}Exit", GetPlayerColor(playerid) >>> 8);
-	return 0;
-}
+//Dialog:USER_COLOR(playerid, response, listitem, inputtext[])
 //Dialog:USER_SPAWN(playerid, response, listitem, inputtext[])

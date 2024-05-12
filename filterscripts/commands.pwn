@@ -304,3 +304,46 @@ CMD:skin(playerid, params[])
 	SendClientMessage(playerid, 0xFF0000FF, "/skin <ID> {FF2222}(0-311, except 74)");
 	return 1;
 }
+
+CMD:u(playerid, params[])
+{
+	Dialog_Show(playerid, USER, DIALOG_STYLE_LIST, "{00FF00}User Settings", "{00FF00}Change username\n{FF0000}Change password\n{%06x}Change player color\n{00FFFF}Change spawn location", "{00FF00}Choose", "{FF0000}Exit", GetPlayerColor(playerid) >>> 8);
+	return 1;
+}
+
+Dialog:USER(playerid, response, listitem, inputtext[])
+{
+    printf("ID: %i response: %d listitem: %i inputtext: %s", playerid, response, listitem, inputtext);
+	if (response)
+    {
+        // Change username
+        if (listitem == 0)
+        {
+            SendClientMessage(playerid, 0xFF0000FF, "Not yet implemented.");
+            return 1;
+        }
+
+        // Change password
+        else if (listitem == 1)
+        {
+            SendClientMessage(playerid, 0xFF0000FF, "Not yet implemented.");	
+            return 1;
+        }
+
+        // Change player color (& and save it to database)
+        else if (listitem == 2)
+        {
+			printf("eat shit");
+            Dialog_Show(playerid, USER_COLOR, DIALOG_STYLE_LIST, "{00FF00}UCP: Changing player color", "{AAAAAA}6 digit hexidecimal values are accepted, ranging from {000000}#000000 {AAAAAA}to {FFFFFF}#FFFFFF\nEnter your new color:", "{00FF00}Enter", "{FF0000}Back");
+			return 1;
+		}
+
+        // Change player spawn preference
+        else if (listitem == 3)
+        {
+            SendClientMessage(playerid, 0xFF0000FF, "Not yet implemented.");
+            return 1;
+        }
+    }
+}
+
