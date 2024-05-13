@@ -7,7 +7,7 @@
 #include <izcmd>
 #include <sscanf2>
 #include <Pawn.Regex>
-
+#pragma warning disable 201, 203
 new DB: Database;
 
 public OnFilterScriptInit()
@@ -262,14 +262,8 @@ CMD:stats(playerid, params[])
 	{FFFFFF}Admin:\t\t%s{FF0000} (%s)\n\
 	{FFFFFF}Password:\t{00FFFF}%s\n\
 	{FFFFFF}Money: \t\t{00AA00}$%s\n{FFFFFF}$ in-hand: \t{007700}$%s\n\
-	{FFFFFF}Score: \t\t{DDDDDD}%s db", "{00FF00}OK", "", uid, GetPlayerColor(playerid) >>> 8, name, AdminLevels[strval(admin)], admin, pass, dollars, dollarsInHand, score);
+	{FFFFFF}Score: \t\t{DDDDDD}%s", "{00FF00}OK", "", uid, GetPlayerColor(playerid) >>> 8, name, AdminLevels[strval(admin)], admin, pass, dollars, dollarsInHand, score);
 	DB_FreeResultSet(Result);
-	return 1;
-}
-
-CMD:test(playerid, params[])
-{
-	SendClientMessage(playerid, -1, "%06x", GetPlayerColor(playerid) >>> 8);
 	return 1;
 }
 
@@ -279,7 +273,7 @@ CMD:kill(playerid, params[])
 	GetPlayerHealth(playerid, health);
 	if(IsPlayerSpawned(playerid) && health >= 0.0)
 	{
-		SendClientMessage(playerid, 0xFF0000AA, "You killed yourself.");
+		SendClientMessage(playerid, 0xFF0000AA, "You killed yourself...");
 		SetPlayerHealth(playerid, 0.0);
 		return 1;
 	}
@@ -304,46 +298,3 @@ CMD:skin(playerid, params[])
 	SendClientMessage(playerid, 0xFF0000FF, "/skin <ID> {FF2222}(0-311, except 74)");
 	return 1;
 }
-
-CMD:u(playerid, params[])
-{
-	Dialog_Show(playerid, USER, DIALOG_STYLE_LIST, "{00FF00}User Settings", "{00FF00}Change username\n{FF0000}Change password\n{%06x}Change player color\n{00FFFF}Change spawn location", "{00FF00}Choose", "{FF0000}Exit", GetPlayerColor(playerid) >>> 8);
-	return 1;
-}
-
-Dialog:USER(playerid, response, listitem, inputtext[])
-{
-    printf("ID: %i response: %d listitem: %i inputtext: %s", playerid, response, listitem, inputtext);
-	if (response)
-    {
-        // Change username
-        if (listitem == 0)
-        {
-            SendClientMessage(playerid, 0xFF0000FF, "Not yet implemented.");
-            return 1;
-        }
-
-        // Change password
-        else if (listitem == 1)
-        {
-            SendClientMessage(playerid, 0xFF0000FF, "Not yet implemented.");	
-            return 1;
-        }
-
-        // Change player color (& and save it to database)
-        else if (listitem == 2)
-        {
-			printf("eat shit");
-            Dialog_Show(playerid, USER_COLOR, DIALOG_STYLE_LIST, "{00FF00}UCP: Changing player color", "{AAAAAA}6 digit hexidecimal values are accepted, ranging from {000000}#000000 {AAAAAA}to {FFFFFF}#FFFFFF\nEnter your new color:", "{00FF00}Enter", "{FF0000}Back");
-			return 1;
-		}
-
-        // Change player spawn preference
-        else if (listitem == 3)
-        {
-            SendClientMessage(playerid, 0xFF0000FF, "Not yet implemented.");
-            return 1;
-        }
-    }
-}
-

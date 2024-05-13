@@ -5,6 +5,7 @@
 #include <easyDialog>
 #include <izcmd>
 #include <sscanf2>
+#pragma warning disable 201, 203
 
 public OnFilterScriptInit()
 {

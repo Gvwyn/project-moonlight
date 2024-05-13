@@ -58,14 +58,14 @@
         "log_deaths": true,
         "log_queries": false,
         "log_sqlite": true,
-        "log_sqlite_queries": false,
+        "log_sqlite_queries": true,
         "timestamp_format": "[%Y-%m-%d %H:%M:%S]",
         "use_prefix": true,
         "use_timestamp": true
     },
     "max_bots": 0,
     "max_players": 30,
-    "name": "Project Hell",
+    "name": "Project Moonlight",
     "network": {
         "acks_limit": 3000,
         "aiming_sync_rate": 30,
@@ -91,7 +91,7 @@
         "time_sync_rate": 30000,
         "use_lan_mode": false
     },
-    "password": "nagybaszas",
+    "password": "",
     "pawn": {
         "legacy_plugins": [
             "pawnregex",

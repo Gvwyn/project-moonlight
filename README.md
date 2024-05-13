@@ -2,9 +2,12 @@
 
 SA:MP server from the ground up in 2024, because im crazy like that
 
+![Static Badge](https://img.shields.io/badge/live_build-28--sqlite-green?style=flat&link=https%3A%2F%2Fgithub.com%2FGvwyn%2Fproject-hell%2Fcommits%2Fmain%2F)
+![Static Badge](https://img.shields.io/badge/current_build-29--revision-blue?style=flat&link=https%3A%2F%2Fgithub.com%2FGvwyn%2Fproject-hell%2Fcommits%2Fmain%2F)
+
 ## current includes, plugins and stuff
 
-- **[open.mp 1.2.0.2670](https://github.com/openmultiplayer)**  
+- **[open.mp 1.2.0.2670](https://github.com/openmultiplayer/open.mp)**  
 - **[iZCMD 0.2.3.0](https://github.com/YashasSamaga/I-ZCMD)**
 - **[easyDialog 2.0](https://github.com/Awsomedude/easyDialog)**
 - **[sscanf 2.13.8](https://github.com/Y-Less/sscanf/)**
@@ -23,14 +26,15 @@ SA:MP server from the ground up in 2024, because im crazy like that
 
 ## changelog
 
-- BUILD 29-revision (latest build) last edited: 5/10/2024
+- BUILD 29-revision (latest build) last edited: ``6:26 PM 5/13/2024``
+    - i was forced to rename this to project-moonlight :)
     - created the minigame menu
         - started a script for a minigame inspired by Alice In Borderland (Scale) - idea by White
     - **new includes**:
         - **easyDialog**: anti-spoofing, easier way to handle dialogs
         - **streamer**: i fucking hate limits
         - ~~**mathutil:** this shit~~ maybe not
-        - **MapAndreas**, allows me to properly use the OnPlayerClickMap teleport MIGHT CAUSE PERFORMANCE ISSUES THO
+        - **MapAndreas** & **samp-map-zones**, allows me to properly use the OnPlayerClickMap teleport MIGHT CAUSE PERFORMANCE ISSUES THO
     - wrote my own IsNaN function because mathutil gave me a fucking headache (and it also didnt work)
     - added a world clock to the top right corner, currently displaying GMT+2 time
     - /v now allows trains to be spawned (its a bit wacky if i do say so myself lmao)
@@ -48,6 +52,9 @@ SA:MP server from the ground up in 2024, because im crazy like that
     - SetPlayerMoney function for better code clarity
     - added database table "User_Settings" for certain you know, user settings and all queries are now up to date to this change
     - welcoming message based on the time of the day (good morning, good evening etc.)
+    - /u(ser settings), completed 1 of the 4 menus in it --> release when its completed ?? whooooaaa
+    - cooldown and autokick for spamming
+    - added a few map markers to los santos
 
 - BUILD 28
     - functions handling money now actually work

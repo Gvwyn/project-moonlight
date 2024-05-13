@@ -1,19 +1,24 @@
 /*
-Egy fajl, amiben globalis valtozok, illetve funkciok vannak
-nagyresze olyan, ami tobb scriptbol is kell(het)
+a singular file with declarations, definitions for stuff that i may
+or may not need throughout multiple source files
 */
 #define VERSION "build 29-rev"
-#define GAMEMODE "Test"
+#define GAMEMODE "Moonlight"
+#define MAP_ANDREAS_FULL_FILE "scriptfiles/SAfull.hmap"
+#define MAP_ANDREAS_MIN_FILE "scriptfiles/SAmin.hmap"
 #define UNKNOWN_ZONE_NAME "Unknown area"
-// #pragma warning disable 203, 214
 
-new Text:Clock; // ora HH:MM formatumban (jelenleg)
+#define GLOBAL_COOLDOWN 3000.0
+#define CHAT_COOLDOWN 1000.0
+#define MAX_VIOLATIONS 5
+// #pragma warning disable 209, 214, 239 // szetbasz az ideg ezektol
 
-new const countAdmins = 1; // adminok szama
-new Admins[1][] = {"The_Balazs"};
-new AdminLevels[5][] = {"{DDDDDD}Nem", "{33FF33}Mod", "{3333FF}Admin", "{AA0000}High Admin", "{FF0000}Owner"};
-// netrol szedett safety feature az adatbazishoz
-// SQL injection ellen ved, escapeli a ' jelet
+new Text:Clock;
+
+new const countAdmins = 1; // number of admins
+new const Admins[1][] = {"The_Balazs"};
+new const AdminLevels[5][] = {"{DDDDDD}No", "{33FF33}Mod", "{3333FF}Admin", "{AA0000}High Admin", "{FF0000}Owner"};
+
 stock DB_Escape(text[])
 {
     new
