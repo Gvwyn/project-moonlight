@@ -9,7 +9,7 @@
 #include <izcmd>
 #include <sscanf2>
 #define MAX_PLAYERS 30
-#pragma warning disable 201, 214
+#pragma warning disable 201, 239
 // csuf rettenet
 
 #define PRESSED(%0) \
@@ -32,7 +32,7 @@ new
 ;
 
 // X.X.X.X.X:PORT & SUSPICIOUS DOMAIN NAMES
-stock AdvertCheck(text[])
+stock AdvertCheck(const text[])
 {
     static Regex:regex;
     if (!regex) regex = Regex_New(".*\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b|\\b(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,}\\b.*");
@@ -71,7 +71,7 @@ SetPlayerMoney(playerid, amount, add = 0)
 get hex value from #FFFFFF etc.etc.
 i hope whoever decided on this is now suffering in the 8th circle of hell
 */
-GetFuckingColors(input[])
+GetFuckingColors(const input[])
 {
     new colorStr[9];
     new color;
@@ -939,7 +939,7 @@ Dialog:USER(playerid, response, listitem, inputtext[])
         // Change username
         if (listitem == 0)
         {
-            SendClientMessage(playerid, 0xFF0000FF, "Not yet implemented.");
+            Dialog_Show(playerid, USER_USERNAME, DIALOG_STYLE_INPUT, "{00FF00}User Settings {FFFFFF}>> {00FF00}Change username", "Change username to:", "Enter", "Back");
         }
 
         // Change password
@@ -952,7 +952,7 @@ Dialog:USER(playerid, response, listitem, inputtext[])
         else if (listitem == 2)
         {
 			// printf("eat shit");
-            Dialog_Show(playerid, USERCOLOR, DIALOG_STYLE_INPUT, "{00FF00}User Settings {FFFFFF}>> {00FF00}Change color", "{AAAAAA}Colors use hex values, ranging from {000000}#000000 {AAAAAA}to {FFFFFF}#FFFFFF\n\nCurrent: {%06x}#%06x {FFFFFF}(#%06x)\nEnter your new color below:", "{00FF00}Set", "{FF0000}Back", GetPlayerColor(playerid) >>> 8, GetPlayerColor(playerid) >>> 8, GetPlayerColor(playerid) >>> 8);
+            Dialog_Show(playerid, USER_COLOR, DIALOG_STYLE_INPUT, "{00FF00}User Settings {FFFFFF}>> {00FF00}Change color", "{AAAAAA}Colors use hex values, ranging from {000000}#000000 {AAAAAA}to {FFFFFF}#FFFFFF\n\nCurrent: {%06x}#%06x {FFFFFF}(#%06x)\nEnter your new color below:", "{00FF00}Set", "{FF0000}Back", GetPlayerColor(playerid) >>> 8, GetPlayerColor(playerid) >>> 8, GetPlayerColor(playerid) >>> 8);
 		}
 
         // Change player spawn preference
@@ -964,9 +964,34 @@ Dialog:USER(playerid, response, listitem, inputtext[])
     return 1;
 }
 
-//Dialog:USER_USERNAME(playerid, response, listitem, inputtext[])
-//Dialog:USER_PASSWORD(playerid, response, listitem, inputtext[])
-Dialog:USERCOLOR(playerid, response, listitem, inputtext[])
+Dialog:USER_USERNAME(playerid, response, listitem, inputtext[])
+{
+    if (response)
+    {
+        new name[MAX_PLAYER_NAME]; GetPlayerName(playerid, name, sizeof(name));
+        // its a valid nickname, length is <=20 and its not the same as their current name
+        if (IsValidNickName(inputtext) && strcmp(name, inputtext, true))
+        {
+            DB_ExecuteQuery(Database, "UPDATE `Players` SET `Player` = '%s' WHERE `UID` = %i", inputtext, Bit16_Get(g_PlayerUID, playerid));
+            SetPlayerName(playerid, inputtext);
+            SendClientMessage(playerid, COLOR_TURQUOISE, "You've changed your name to {FFFFFF}%s{00AAFF}.", inputtext);
+            SendClientMessage(playerid, COLOR_TURQUOISE, "Don't forget to also change your nickname in the client the next time you join!");
+            return 1;
+        }
+        else
+        {
+            Dialog_Show(playerid, USERUSER, DIALOG_STYLE_INPUT, "{FFFFFF}Changing username", "you fucked up\nchange username to:", "Enter", "Back");
+        }
+    }
+
+	else Dialog_Show(playerid, USER, DIALOG_STYLE_LIST, "{00FF00}User Settings", "{00FF00}Change username\n{FF0000}Change password\n{%06x}Change player color\n{00FFFF}Change spawn location", "{00FF00}Choose", "{FF0000}Exit", GetPlayerColor(playerid) >>> 8);
+    return 1;
+}
+
+//Dialog:USER_PASSWORD_CHECK(playerid, response, listitem, inputtext[])
+//Dialog:USER_PASSWORD_NEW(playerid, response, listitem, inputtext[])
+
+Dialog:USER_COLOR(playerid, response, listitem, inputtext[])
 {
     if (response)
     {
@@ -989,8 +1014,7 @@ Dialog:USERCOLOR(playerid, response, listitem, inputtext[])
 
         else
         {
-            Dialog_Close(playerid);
-            Dialog_Show(playerid, USERCOLOR, DIALOG_STYLE_INPUT, "{00FF00}User Settings {FFFFFF}>> {00FF00}Change color", "{AAAAAA}Colors use hex values, ranging from {000000}#000000 {AAAAAA}to {FFFFFF}#FFFFFF\n\nCurrent: {%06x}#%06x {FFFFFF}(#%06x)\n{FF0000}Invalid color, try again!\n{FFFFFF}Enter your new color below:", "{00FF00}Set", "{FF0000}Back", GetPlayerColor(playerid) >>> 8, GetPlayerColor(playerid) >>> 8, GetPlayerColor(playerid) >>> 8);
+            Dialog_Show(playerid, USER_COLOR, DIALOG_STYLE_INPUT, "{00FF00}User Settings {FFFFFF}>> {00FF00}Change color", "{AAAAAA}Colors use hex values, ranging from {000000}#000000 {AAAAAA}to {FFFFFF}#FFFFFF\n\nCurrent: {%06x}#%06x {FFFFFF}(#%06x)\n{FF0000}Invalid color, try again!\n{FFFFFF}Enter your new color below:", "{00FF00}Set", "{FF0000}Back", GetPlayerColor(playerid) >>> 8, GetPlayerColor(playerid) >>> 8, GetPlayerColor(playerid) >>> 8);
         }
     }
 
