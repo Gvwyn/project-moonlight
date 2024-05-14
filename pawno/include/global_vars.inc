@@ -13,14 +13,8 @@ or may not need throughout multiple source files
 #define MAX_VIOLATIONS 5
 // #pragma warning disable 209, 214, 239 // szetbasz az ideg ezektol
 
-// colors
-#define COLOR_TURQUOISE     0x4D7181FF
-#define COLOR_LTURQUOISE    0x82AAABFF
-#define COLOR_LIGHTRED      0xE6C0D0FF
-#define COLOR_RED           0xFF0000FF
-#define COLOR_AQUA          0x00FFFFFF
-#define COLOR_GREEN         0x00FF00FF
-
+// colors - gonna add them later
+#define COLOR_RED         0xFF0000FF
 
 new Text:Clock;
 

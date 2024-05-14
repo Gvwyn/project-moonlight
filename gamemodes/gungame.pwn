@@ -635,23 +635,24 @@ Dialog:LOGIN(playerid, response, listitem, inputtext[])
             {
                 Dialog_Close(playerid);
                 BlockIpAddress(ip, 5 * 60 * 1000); // blocks the IP for 5 minutes
-                return 1;
             }
             Dialog_Show(playerid, LOGIN, DIALOG_STYLE_PASSWORD, "{00FF00}Login", "{FF0000}The password you entered is incorrect, try again. {FFFFFF}({FF0000}%i{FFFFFF}/{FF0000}3{FFFFFF})", "{00FF00}Login", "{FF0000}Kick", GetPVarInt(playerid, "logins"));
         }
-        DB_FreeResultSet(Result);
     }
     else 
     {
         printf("[kick] Kicking player ID %i %s for trying to skip logging in.", playerid, name);
-        return Kick(playerid);
+        Kick(playerid);
     }
+    DB_FreeResultSet(Result);
     return 1;
 }
 
 Dialog:REGISTER(playerid, response, listitem, inputtext[])
 {
     new
+        DBResult:UID,
+        uid_to_bit16[4],
         name[MAX_PLAYER_NAME],
         serial[41]
     ;
@@ -669,7 +670,11 @@ Dialog:REGISTER(playerid, response, listitem, inputtext[])
         {
             DB_ExecuteQuery(Database, "INSERT INTO `Players` (`UID`, `Player`, `Password`, `GPCI`, `Score`, `Cash`, `Admin`) VALUES(NULL, '%s', '%s', '%s', '0', '10000', '0')", DB_Escape(name), DB_Escape(inputtext), DB_Escape(serial));
             DB_ExecuteQuery(Database, "INSERT INTO `User_Settings` (`UID`, `PlayerColor`, `PlayerSpawnPreference`, `PlayerSkinID`) VALUES(NULL, 'AAAAAAFF', '0', '0')");        
- 
+            UID = DB_ExecuteQuery(Database, "SELECT `UID` FROM `Players` WHERE `Player` = '%s'", name);
+            DB_GetFieldStringByName(UID, "UID", uid_to_bit16, 4);
+            DB_FreeResultSet(UID);
+            Bit16_Set(g_PlayerUID, playerid, strval(uid_to_bit16));
+
             Bit1_Set(g_PlayerLogged, playerid, true); 
             SetPlayerMoney(playerid, 10000);
             SetPlayerScore(playerid, 0);
@@ -702,12 +707,12 @@ CMD:setadmin(playerid, params[])
         }
         else
         {
-            SendClientMessage(playerid, 0xFF0000AA, "/setadmin <id> <level>");
+            SendClientMessage(playerid, COLOR_RED, "/setadmin <id> <level>");
         }
     }
     else
     {
-        SendClientMessage(playerid, 0xFF0000AA, "Missing permission(s).");
+        SendClientMessage(playerid, COLOR_RED, "Missing permission(s).");
     }
     return 1;
 }
@@ -826,7 +831,7 @@ CMD:bm(playerid, params[])      { TeleportPlayerToPublicTp(playerid, true, -2261
 
 // END OF public teleports
 
-CMD:database(playerid, params[])
+CMD:db(playerid, params[])
 {
     if (4 == Bit8_Get(g_AdminLevel, playerid))
     {
@@ -856,13 +861,13 @@ CMD:reg(playerid, params[])
         {
             SetSVarInt("Reg", 0);
             SetServerRule("reg", "Off");
-            SendClientMessageToAll(0xFF0000AA, "%s disabled account registration.", name);
+            SendClientMessageToAll(COLOR_RED, "%s disabled account registration.", name);
             return 1;
         }
     }
     else
     {
-        SendClientMessage(playerid, 0xFF0000AA, "Missing permission(s).");
+        SendClientMessage(playerid, COLOR_RED, "Missing permission(s).");
         return 1;
     }
 }
@@ -904,11 +909,11 @@ CMD:doubloon(playerid, params[])
         }
         else
         {
-            SendClientMessage(playerid, 0xFF0000AA, "/doubloon <0/1> <$>");
+            SendClientMessage(playerid, COLOR_RED, "/doubloon <0/1> <$>");
             return 1;
         }
     }
-    SendClientMessage(playerid, 0xFF0000AA, "Missing permission(s).");
+    SendClientMessage(playerid, COLOR_RED, "Missing permission(s).");
     return 1;
 }
 
@@ -974,8 +979,8 @@ Dialog:USER_USERNAME(playerid, response, listitem, inputtext[])
         {
             DB_ExecuteQuery(Database, "UPDATE `Players` SET `Player` = '%s' WHERE `UID` = %i", inputtext, Bit16_Get(g_PlayerUID, playerid));
             SetPlayerName(playerid, inputtext);
-            SendClientMessage(playerid, COLOR_TURQUOISE, "You've changed your name to {FFFFFF}%s{00AAFF}.", inputtext);
-            SendClientMessage(playerid, COLOR_TURQUOISE, "Don't forget to also change your nickname in the client the next time you join!");
+            SendClientMessage(playerid, 0x00AAFFFF, "You've changed your name to {FFFFFF}%s{00AAFF}.", inputtext);
+            SendClientMessage(playerid, 0x00AAFFFF, "Don't forget to also change your nickname in the client the next time you join!");
             return 1;
         }
         else
