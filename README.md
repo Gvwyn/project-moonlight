@@ -1,9 +1,9 @@
-# Project Hell
-
-SA:MP server from the ground up in 2024, because im crazy like that
+# Project Moonlight
 
 ![Static Badge](https://img.shields.io/badge/live_build-28--sqlite-green?style=flat&link=https%3A%2F%2Fgithub.com%2FGvwyn%2Fproject-hell%2Fcommits%2Fmain%2F)
 ![Static Badge](https://img.shields.io/badge/current_build-29--revision-blue?style=flat&link=https%3A%2F%2Fgithub.com%2FGvwyn%2Fproject-hell%2Fcommits%2Fmain%2F)
+
+SA:MP server from the ground up in 2024, because im crazy like that
 
 ## current includes, plugins and stuff
 
